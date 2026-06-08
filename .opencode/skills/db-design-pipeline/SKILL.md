@@ -39,7 +39,7 @@ Do not skip any Markdown file.
 Save to:
 `outputs/01-business-req-analysis.md`
 The document must include:
-<!-- YOUR SKILL DESCRIPTION HERE -->
+Analyze the requirements to identify the business purpose, actors, entities, attributes, relationships, cardinalities, and business rules.
 
 # Step 2: Conceptual Design / ERD
 

@@ -1,10 +1,9 @@
 # AGENTS.md — cs486-demo
 
-CS486 database systems teaching demo. Repository is empty; expect code to be added during sessions.
+CS486 database systems teaching demo. This repository contains business requirements in the `req/` directory, and output design documents will be saved in `outputs/`
 
 ## Recurring context
 
-- Root directory: <!-- YOUR ROOT DIRECTORY -->
 - This is a demo project, not production.
 - Run `ls -la` to detect new files before assuming anything exists.
 

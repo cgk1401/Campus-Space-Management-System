@@ -6,8 +6,14 @@ Use the database design pipeline skill in:
 
 `.opencode/skills/db-design-pipeline/SKILL.md`
 
-Read the business requirement from:
-
+Read the original business requirement from:
 `$ARGUMENTS`
+(Use this file to understand the deep business context and purpose).
 
-Run the full pipeline and generate/update all required outputs.
+Read the structured summary from:
+`req/summary-business-requirement.md`
+(Use this file as a STRICT CHECKLIST to ensure no Roles, Entities, Attributes, or Business Rules are missed).
+
+INSTRUCTIONS:
+1. We will work step-by-step. Do NOT execute all steps at once.
+2. For now, ONLY execute Phase 1 - Task 1: Business Requirement Analysis, then stop reporting and wait for my approval before proceeding to Step 2.
