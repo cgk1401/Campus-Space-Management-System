@@ -23,8 +23,13 @@ Do not jump directly to DDL. The documents from the prior steps should be follow
 
 ## Required Outputs
 
-- `docs/01-business-requirement-analysis.md`
-- `docs/02-conceptual-design-erd.md`
+- `outputs/01-business-req-analysis.md`
+- `outputs/02-erd-design.md`
+- `outputs/03-logical-design.md`
+- `outputs/04-design-validation.md`
+- `outputs/05-db-definition.md`
+- `outputs/06-sample-data.md`
+- `outputs/07-query-design.md`
 
 ## DBMS
 

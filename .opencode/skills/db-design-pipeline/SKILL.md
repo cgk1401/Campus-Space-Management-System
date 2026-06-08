@@ -22,8 +22,13 @@ Before assuming anything, inspect the project:
 
 Create or update the following files:
 
-1. `docs/01-business-requirement-analysis.md`
-2. `docs/02-conceptual-design-erd.md`
+1. `outputs/01-business-req-analysis.md`
+2. `outputs/02-erd-design.md`
+3. `outputs/03-logical-design.md`
+4. `outputs/04-design-validation.md`
+5. `outputs/05-db-definition.md`
+6. `outputs/06-sample-data.md`
+7. `outputs/07-query-design.md`
 
 Do not skip any Markdown file.
 
@@ -32,24 +37,51 @@ Do not skip any Markdown file.
 # Step 1: Business Requirement Analysis
 
 Save to:
-
-`docs/01-business-requirement-analysis.md`
-
+`outputs/01-business-req-analysis.md`
 The document must include:
-
 <!-- YOUR SKILL DESCRIPTION HERE -->
+
 # Step 2: Conceptual Design / ERD
 
 The ERD should be based on the document from the prior step: Step 1: Business Requirement Analysis.
 
 Save to:
-
-`docs/02-conceptual-design-erd.md`
-
+`outputs/02-erd-design.md`
 The document must include:
+<!-- YOUR SKILL DESCRIPTION HERE -->
 
+# Step 3: Logical Design
+
+Save to:
+`outputs/03-logical-design.md`
+The document must include:
+<!-- YOUR SKILL DESCRIPTION HERE -->
+
+# Step 4: Design Validation
+
+Save to:
+`outputs/04-design-validation.md`
+The document must include:
+<!-- YOUR SKILL DESCRIPTION HERE -->
+
+# Step 5: Database Definition
+
+Save to:
+`outputs/05-db-definition.md`
+The document must include:
+<!-- YOUR SKILL DESCRIPTION HERE -->
+
+# Step 6: Sampple Data
+
+Save to:
+`outputs/06-sample-data.md`
+The document must include:
 <!-- YOUR SKILL DESCRIPTION HERE -->
 
 
+# Step 7:
 
-<!-- SIMILARLY FOR FOLLOWING STEPS -->
+Save to:
+`outputs/07-query-design.md`
+The document must include:
+<!-- YOUR SKILL DESCRIPTION HERE -->
