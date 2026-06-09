@@ -43,8 +43,6 @@ Analyze the requirements to identify the business purpose, actors, entities, att
 
 # Step 2: Conceptual Design / ERD
 
-The ERD should be based on the document from the prior step: Step 1: Business Requirement Analysis.
-
 Save to:
 `outputs/02-erd-design.md`
 The document must include:
@@ -71,7 +69,7 @@ Save to:
 The document must include:
 <!-- YOUR SKILL DESCRIPTION HERE -->
 
-# Step 6: Sampple Data
+# Step 6: Sample Data
 
 Save to:
 `outputs/06-sample-data.md`
