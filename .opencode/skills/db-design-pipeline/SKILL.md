@@ -62,17 +62,24 @@ A relational schema with relations, attributes, primary keys, foreign keys, cand
 
 # Step 4: Design Validation
 
+The ERD and the schema be based on the document from the prior step: Step 2 and Step 3
+
 Save to:
 `outputs/04-design-validation.md`
 The document must include:
-<!-- YOUR SKILL DESCRIPTION HERE -->
+Evaluate whether the relational schema correctly represents the ERD, satisfies the business rules, and uses appropriate keys, relationships, and constraints.
+
 
 # Step 5: Database Definition
+
+Implement the database using SQL DDL with tables,
+keys, constraints, checks, and default values where appropriate.
 
 Save to:
 `outputs/05-db-definition.md`
 The document must include:
-<!-- YOUR SKILL DESCRIPTION HERE -->
+The database using SQL DDL with tables, keys, constraints, checks, and default values where appropriate.
+
 
 # Step 6: Sample Data
 
