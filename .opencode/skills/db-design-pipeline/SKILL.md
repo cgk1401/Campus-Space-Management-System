@@ -76,7 +76,8 @@ The document must include:
 Save to:
 `outputs/06-sample-data.md`
 The document must include:
-<!-- YOUR SKILL DESCRIPTION HERE -->
+Insert realistic sample data to support testing of normal 
+operations and important exceptional cases.
 
 
 # Step 7:
@@ -84,4 +85,6 @@ The document must include:
 Save to:
 `outputs/07-query-design.md`
 The document must include:
-<!-- YOUR SKILL DESCRIPTION HERE -->
+ Each student must design and execute at least 5 meaningful SQL 
+queries that are valid for the database and useful for answering business questions 
+in the given context. Each query must include: Business question, target user(s) that would use the query, short explanation of why the query is useful, SQL statement.
