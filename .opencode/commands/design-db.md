@@ -16,4 +16,4 @@ Read the structured summary from:
 
 INSTRUCTIONS:
 1. We will work step-by-step. Do NOT execute all steps at once.
-2. For now, ONLY execute Phase 2 - Task 2 : Conceptual Database Design: then stop reporting and wait for my approval before proceeding to Step 3.
+2. For now, ONLY execute Phase 3 - Task 3 : Logical Database Design, then stop reporting and wait for my approval before proceeding to Step 4.
