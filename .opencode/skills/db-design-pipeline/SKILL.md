@@ -43,35 +43,45 @@ Analyze the requirements to identify the business purpose, actors, entities, att
 
 # Step 2: Conceptual Design / ERD
 
-The ERD should be based on the document from the prior step: Step 1: Business Requirement Analysis.
+Design an ERD that should be based on the document from the prior step: Step 1: Business Requirement Analysis.
 
 Save to:
 `outputs/02-erd-design.md`
 The document must include:
-<!-- YOUR SKILL DESCRIPTION HERE -->
+An ERD showing the main entities, attributes, relationships, cardinalities, and participation constraints.
 
 # Step 3: Logical Design
+
+Convert the ERD from Step 2 (Conceptual Design) into a relational schema
 
 Save to:
 `outputs/03-logical-design.md`
 The document must include:
-<!-- YOUR SKILL DESCRIPTION HERE -->
+A relational schema with relations, attributes, primary keys, foreign keys, candidate keys, and key constraints.
+
 
 # Step 4: Design Validation
+
+The ERD and the schema be based on the document from the prior step: Step 2 and Step 3
 
 Save to:
 `outputs/04-design-validation.md`
 The document must include:
-<!-- YOUR SKILL DESCRIPTION HERE -->
+Evaluate whether the relational schema correctly represents the ERD, satisfies the business rules, and uses appropriate keys, relationships, and constraints.
+
 
 # Step 5: Database Definition
+
+Implement the database using SQL DDL with tables,
+keys, constraints, checks, and default values where appropriate.
 
 Save to:
 `outputs/05-db-definition.md`
 The document must include:
-<!-- YOUR SKILL DESCRIPTION HERE -->
+The database using SQL DDL with tables, keys, constraints, checks, and default values where appropriate.
 
-# Step 6: Sampple Data
+
+# Step 6: Sample Data
 
 Save to:
 `outputs/06-sample-data.md`
