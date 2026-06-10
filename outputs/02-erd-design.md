@@ -170,6 +170,7 @@ erDiagram
     Space ||--o{ MaintenanceRecord : "has"
     User ||--o{ MaintenanceRecord : "reports"
     User ||--o{ MaintenanceRecord : "is assigned to"
+    User ||--o{ UsageSession : "checks in"
     BookingRequest ||--o| UsageSession : "has"
 ```
 
@@ -187,7 +188,8 @@ erDiagram
 | R6 | Space | 1 | has | N | MaintenanceRecord | Optional | Mandatory |
 | R7 | User | 1 | reports | N | MaintenanceRecord | Optional | Mandatory |
 | R8 | User | 1 | is assigned to | N | MaintenanceRecord | Optional | Optional |
-| R9 | BookingRequest | 1 | has | 1 | UsageSession | Optional | Mandatory |
+| R9 | User | 1 | checks in | N | UsageSession | Optional | Mandatory |
+| R10 | BookingRequest | 1 | has | 1 | UsageSession | Optional | Mandatory |
 
 ### Participation Explanation
 
@@ -199,7 +201,8 @@ erDiagram
 - **R6 — Space has MaintenanceRecord:** A Space may have zero or many maintenance records (optional). Every MaintenanceRecord must reference exactly one Space (mandatory).
 - **R7 — User reports MaintenanceRecord:** A User may report zero or many issues (optional). Every MaintenanceRecord must have exactly one Reporter (mandatory).
 - **R8 — User is assigned to MaintenanceRecord:** A User (Facility Staff) may be assigned zero or many maintenance tasks (optional). A MaintenanceRecord may have zero or one AssignedStaff (optional — can be unassigned initially).
-- **R9 — BookingRequest has UsageSession:** A BookingRequest may have at most one UsageSession (optional — not yet checked in). Every UsageSession corresponds to exactly one BookingRequest (mandatory).
+- **R9 — User checks in UsageSession:** A User (Facility Staff) may check in zero or many bookings (optional). Every UsageSession must record exactly one check-in staff member (mandatory).
+- **R10 — BookingRequest has UsageSession:** A BookingRequest may have at most one UsageSession (optional — not yet checked in). Every UsageSession corresponds to exactly one BookingRequest (mandatory).
 
 ---
 
