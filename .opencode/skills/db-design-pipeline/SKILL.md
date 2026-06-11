@@ -95,6 +95,6 @@ operations and important exceptional cases.
 Save to:
 `outputs/07-query-design.md`
 The document must include:
- Each student must design and execute at least 5 meaningful SQL 
+Design and execute at 20 meaningful SQL 
 queries that are valid for the database and useful for answering business questions 
 in the given context. Each query must include: Business question, target user(s) that would use the query, short explanation of why the query is useful, SQL statement.
