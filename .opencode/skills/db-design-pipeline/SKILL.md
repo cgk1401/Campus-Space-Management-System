@@ -50,6 +50,16 @@ Save to:
 The document must include:
 An ERD showing the main entities, attributes, relationships, cardinalities, and participation constraints.
 
+If different actors have different permissions (e.g. only certain roles can approve, check in, or be assigned),
+note these as role-based access constraints in the relationship details section.
+
+## Modeling Rules
+
+- Each named relationship must be represented explicitly in the schema.
+- For 1:1 relationships, use the parent PK as the child PK (no new surrogate key).
+- Avoid folding relationship attributes (e.g., decision info, assignment info) into one of the participating entity tables. If a relationship has its own attributes, give it its own table.
+- Exception: if a relationship has no attributes and is 1:N, a FK column on the child table is sufficient. Only create a junction table for M:N or when the relationship itself carries attributes.
+
 # Step 3: Logical Design
 
 Convert the ERD from Step 2 (Conceptual Design) into a relational schema
@@ -58,6 +68,24 @@ Save to:
 `outputs/03-logical-design.md`
 The document must include:
 A relational schema with relations, attributes, primary keys, foreign keys, candidate keys, and key constraints.
+
+The relational schema must explicitly document for each table:
+- Primary key
+- Foreign keys with ON DELETE justification
+- Candidate keys (UNIQUE constraints)
+- NOT NULL constraints on mandatory attributes
+- CHECK constraints for enum/domain columns (list valid values)
+- CHECK constraints for numeric rules (e.g. Capacity > 0, EndTime > StartTime)
+- DEFAULT values where a sensible default exists
+
+For each foreign key, state the ON DELETE action and justify it briefly. Consider:
+- Whether the child record has independent meaning without its parent
+- Whether the parent should be soft-deleted (status field) rather than hard-deleted
+
+Role-based access constraints should be listed in the Business Rule Enforcement table as application-level rules, not SQL constraints
+
+Clearly distinguish between constraints enforceable via DDL (CHECK, UNIQUE, NOT NULL) and those requiring application logic. 
+Do not list DDL-enforceable constraints as application-level.
 
 
 # Step 4: Design Validation

@@ -2,169 +2,178 @@
 
 ## 1. Business Purpose
 
-The School of Computer Science manages several shared physical spaces (auditoriums, classrooms, computer laboratories, project laboratories, meeting rooms, student workspaces) used for teaching, seminars, examinations, workshops, student projects, research activities, and academic events. The current manual process (email, phone, spreadsheets, shared calendars) has become unmanageable as demand grows. The School requires a database system to automate and manage space booking, approval workflows, usage session tracking, maintenance management, incident reporting, and facility utilization.
+The School of Computer Science wants to build a database system to manage the booking and usage of shared campus spaces (auditoriums, classrooms, computer laboratories, project laboratories, meeting rooms, and student workspaces). The current manual process (spreadsheets, shared calendars, phone/email) is no longer sustainable as the volume of teaching, seminars, workshops, student projects, and academic events grows.
 
-**Primary goals:**
-- Manage shared campus spaces fairly.
-- Avoid overlapping bookings.
-- Prevent the use of unavailable spaces.
-- Preserve full usage and maintenance history.
+The system's main goals are:
+- Manage shared campus spaces fairly and transparently.
+- Avoid overlapping / conflicting bookings.
+- Prevent the use of unavailable spaces (under maintenance, closed, or retired).
+- Preserve usage, booking, and maintenance history.
+- Enable facility staff to efficiently handle check-in/check-out, approvals, and maintenance tracking.
 
 ---
 
-## 2. Actors (Users & Roles)
+## 2. Actors (User Roles)
 
 | Role | Description |
 |------|-------------|
-| Student | Submits booking requests for student activities or projects. |
-| Lecturer | Submits booking requests for lectures, seminars, workshops, examinations. |
-| Teaching Assistant | May book spaces on behalf of a course or lecturer. |
-| Facility Staff | Checks in/out bookings, approves/rejects requests, handles maintenance tasks. |
-| Department Administrator | May oversee bookings and usage within the department. |
-| Facility Manager | High-level oversight; approves/rejects bookings, manages maintenance. |
+| **Student** | Submits booking requests for student activities. |
+| **Lecturer** | Submits booking requests for lectures, exams, seminars. |
+| **Teaching Assistant** | Submits booking requests on behalf of lecturers. |
+| **Facility Staff** | Handles check-in/check-out, performs approvals, views reports. |
+| **Department Administrator** | Oversees bookings for the department, views reports. |
+| **Facility Manager** | Full access: approvals, maintenance, reports, system oversight. |
 
 ---
 
 ## 3. Entities & Attributes
 
 ### 3.1. User
-Stores all individuals who interact with the system.
-
 | Attribute | Type | Notes |
 |-----------|------|-------|
-| User ID | PK | University account identifier |
-| Full name | String | |
-| Email | String | |
-| Phone number | String | |
-| Role | Enum | Student, Lecturer, Teaching Assistant, Facility Staff, Department Administrator, Facility Manager |
-| Department | String | |
-| Account status | Enum | e.g., Active, Inactive, Suspended |
+| UserID | PK | University account identifier |
+| FullName | VARCHAR | |
+| Email | VARCHAR | |
+| PhoneNumber | VARCHAR | |
+| Role | ENUM | Student, Lecturer, TeachingAssistant, FacilityStaff, DepartmentAdministrator, FacilityManager |
+| Department | VARCHAR | |
+| AccountStatus | VARCHAR | e.g., Active, Disabled |
 
 ### 3.2. Space
-Represents a bookable physical location.
-
 | Attribute | Type | Notes |
 |-----------|------|-------|
-| Space code | PK | Unique identifier |
-| Space name | String | |
-| Space type | Enum | e.g., Auditorium, Classroom, Computer Lab, Project Lab, Meeting Room, Student Workspace |
-| Building | String | |
-| Floor | Integer | |
-| Room number | String | |
-| Capacity | Integer | |
-| Current status | Enum | Available, In Use, Under Maintenance, Temporarily Closed, Retired |
-| Usage policy | Text | Rules/guidelines for using the space |
+| SpaceCode | PK | Unique identifier (e.g., "B1-101") |
+| SpaceName | VARCHAR | |
+| SpaceType | ENUM | Auditorium, Classroom, ComputerLaboratory, ProjectLaboratory, MeetingRoom, StudentWorkspace |
+| Building | VARCHAR | |
+| Floor | INT | |
+| RoomNumber | VARCHAR | |
+| Capacity | INT | Must be > 0 |
+| CurrentStatus | ENUM | Available, InUse, UnderMaintenance, TemporarilyClosed, Retired |
+| UsagePolicy | TEXT | |
 
-### 3.3. Facility
-Equipment or amenity available within a space.
-
+### 3.3. FacilityType
 | Attribute | Type | Notes |
 |-----------|------|-------|
-| Facility ID | PK | |
-| Facility name | String | e.g., Projector, Whiteboard, Microphone, Computer, Livestreaming Equipment, Air Conditioner |
-| (Space code) | FK | The space this facility belongs to |
+| FacilityName | PK | e.g., "Projector", "Whiteboard", "Microphone", "Computer", "LivestreamingEquipment", "AirConditioner" |
 
-### 3.4. Booking Request
-A request submitted by a user to reserve a space.
-
+### 3.4. SpaceFacility (Assignment)
 | Attribute | Type | Notes |
 |-----------|------|-------|
-| Booking ID | PK | |
-| (Requester ID) | FK | References User |
-| (Space code) | FK | References Space |
-| Requested start time | DateTime | |
-| Requested end time | DateTime | |
-| Purpose of use | Enum | Lecture, Examination, Seminar, Workshop, Meeting, Student Activity, Administrative Event |
-| Expected participants | Integer | |
-| Status | Enum | Pending, Approved, Rejected, Cancelled, Checked In, Completed, No-show |
+| SpaceCode | PK, FK | References Space |
+| FacilityName | PK, FK | References FacilityType |
+- Composite PK: (SpaceCode, FacilityName).
 
-### 3.5. Approval
-Records the decision on a booking request.
-
+### 3.5. BookingRequest
 | Attribute | Type | Notes |
 |-----------|------|-------|
-| Approval ID | PK | |
-| (Booking ID) | FK | References Booking Request (1:1) |
-| (Approver ID) | FK | References User (Facility Staff or Manager) |
-| Decision time | DateTime | |
-| Decision note | String | |
-| Rejection reason | String | Required only if status is Rejected |
+| BookingID | PK | |
+| RequesterID | FK | References User |
+| SpaceCode | FK | References Space |
+| StartTime | DATETIME | Requested start |
+| EndTime | DATETIME | Requested end (must be > StartTime) |
+| Purpose | ENUM | Lecture, Examination, Seminar, Workshop, Meeting, StudentActivity, AdministrativeEvent |
+| ExpectedParticipants | INT | Must be > 0 |
+| Status | ENUM | Pending, Approved, Rejected, Cancelled, CheckedIn, Completed, NoShow |
 
-### 3.6. Usage Session
-Captures check-in and check-out details for a booking.
-
+### 3.6. Approval
 | Attribute | Type | Notes |
 |-----------|------|-------|
-| (Booking ID) | PK, FK | References Booking Request (1:1) |
-| Actual start time | DateTime | Logged at check-in |
-| Check-in staff ID | FK | References User |
-| Initial condition | Text | Condition of space upon arrival |
-| Actual end time | DateTime | Logged at completion |
-| Final condition | Text | Condition of space after use |
-| Usage notes | Text | Any notes from staff |
+| BookingID | PK, FK | References BookingRequest (1:1) |
+| ApproverID | FK | References User (FacilityStaff or FacilityManager) |
+| DecisionTime | DATETIME | |
+| DecisionNote | TEXT | |
+| RejectionReason | TEXT | NULL if approved |
 
-### 3.7. Maintenance Record
-Tracks reported issues and repair work for spaces.
-
+### 3.7. UsageSession (Check-in / Check-out)
 | Attribute | Type | Notes |
 |-----------|------|-------|
-| Maintenance ID | PK | |
-| (Space code) | FK | References Space |
-| (Reporter ID) | FK | References User (who reported) |
-| (Assigned staff ID) | FK | References User (Facility Staff assigned) |
-| Problem description | Text | |
-| Start time | DateTime | |
-| Completion time | DateTime | Nullable; set when resolved |
-| Status | Enum | e.g., Reported, In Progress, Completed, Cancelled |
-| Result note | Text | Summary of resolution |
+| BookingID | PK, FK | References BookingRequest (1:1) |
+| ActualStartTime | DATETIME | Recorded at check-in |
+| CheckInStaffID | FK | References User |
+| InitialCondition | TEXT | Space condition on arrival |
+| ActualEndTime | DATETIME | Recorded at completion (nullable until session ends) |
+| FinalCondition | TEXT | Space condition on departure |
+| UsageNotes | TEXT | |
+
+### 3.8. MaintenanceRecord
+| Attribute | Type | Notes |
+|-----------|------|-------|
+| MaintenanceID | PK | |
+| SpaceCode | FK | References Space |
+| ReporterID | FK | References User (any role may report) |
+| AssignedStaffID | FK | References User (FacilityStaff/FacilityManager) |
+| ProblemDescription | TEXT | |
+| StartTime | DATETIME | |
+| CompletionTime | DATETIME | Nullable |
+| Status | VARCHAR | e.g., Open, InProgress, Resolved, Closed |
+| ResultNote | TEXT | |
 
 ---
 
 ## 4. Relationships & Cardinalities
 
-| Entity A | Relationship | Entity B | Cardinality | Participation |
-|----------|-------------|----------|-------------|---------------|
-| User | submits | Booking Request | 1:N | User: optional (a user may have 0 bookings); Booking: mandatory |
-| Space | is booked by | Booking Request | 1:N | Space: optional; Booking: mandatory |
-| Booking Request | has | Approval | 1:1 | Booking: optional (may remain pending); Approval: mandatory if decision made |
-| User | approves | Approval | 1:N | User: optional; Approval: mandatory |
-| Space | contains | Facility | 1:N | Space: optional (may have 0 facilities); Facility: mandatory |
-| Space | has | Maintenance Record | 1:N | Space: optional; Maintenance: mandatory |
-| User | reports | Maintenance Record | 1:N | User: optional; Maintenance: mandatory |
-| User | is assigned to | Maintenance Record | 1:N | User: optional; Maintenance: optional (may be unassigned) |
-| Booking Request | has | Usage Session | 1:1 | Booking: optional (not yet checked in); Usage Session: mandatory if checked in |
+| Relationship | Entity A | Entity B | Cardinality | Participation |
+|-------------|----------|----------|-------------|---------------|
+| Submits | User (Requester) | BookingRequest | 1:N | User: optional; BookingRequest: mandatory |
+| Targets | BookingRequest | Space | N:1 | BookingRequest: mandatory; Space: optional |
+| Decides | Approval | BookingRequest | 1:1 | Approval: mandatory; BookingRequest: optional |
+| Approves | User (Approver) | Approval | 1:N | User: optional; Approval: mandatory |
+| Records | BookingRequest | UsageSession | 1:1 | UsageSession: mandatory; BookingRequest: optional |
+| ChecksIn | User (Staff) | UsageSession | 1:N | User: optional; UsageSession: mandatory |
+| Contains | Space | FacilityType (via SpaceFacility) | M:N | Both: optional |
+| Reports | User (Reporter) | MaintenanceRecord | 1:N | User: optional; MaintenanceRecord: mandatory |
+| AssignedTo | User (Staff) | MaintenanceRecord | 1:N | User: optional; MaintenanceRecord: optional |
+| Affects | MaintenanceRecord | Space | N:1 | MaintenanceRecord: mandatory; Space: optional |
+
+**Notes on participation:**
+- "Optional" on the User side means not every user must have a booking/maintenance/approval record.
+- "Optional" on the Space side means a space may have zero bookings or zero maintenance records.
+- BookingRequest → UsageSession: mandatory because every completed check-in creates a UsageSession record. However, if a booking is cancelled/rejected before check-in, it may not have a UsageSession — so the participation from BookingRequest side is optional.
 
 ---
 
 ## 5. Business Rules
 
-1. **Unique booking identification** — Each booking request has a unique Booking ID.
-2. **Conflict prevention** — The same space cannot have two approved bookings with overlapping time periods. The system must enforce this constraint.
-3. **Unavailable space restriction** — Spaces with status *Under Maintenance*, *Temporarily Closed*, or *Retired* cannot be booked.
-4. **Approval tracking** — When a booking is approved or rejected, the system must record the approving staff member, decision time, decision note, and (if rejected) the rejection reason.
-5. **Check-in / Check-out** — Actual start/end times and space conditions must be recorded during check-in and check-out.
-6. **Maintenance blocks booking** — A space with an active (non-completed) maintenance record cannot be booked.
-7. **Historical records** — Past bookings and maintenance records must be preserved and queryable (no physical deletion).
-8. **University account** — Every user must have a university account to interact with the system.
-9. **Status lifecycle** — Booking status transitions follow: Pending → (Approved | Rejected | Cancelled) → Checked In → Completed | No-show.
+| # | Rule | Source |
+|---|------|--------|
+| BR1 | Users must have a university account to submit bookings. | §1.2 |
+| BR2 | A space CANNOT have two approved/checked-in bookings with overlapping time periods. | §1.4 (conflict prevention) |
+| BR3 | Spaces with status `UnderMaintenance`, `TemporarilyClosed`, or `Retired` CANNOT be booked. | §1.4, §1.7 |
+| BR4 | A space under an active (unresolved) maintenance record CANNOT be booked. | §1.7 |
+| BR5 | Booking approvals/rejections must record the approver, decision time, and decision note. If rejected, a rejection reason is required. | §1.5 |
+| BR6 | Check-in records the actual start time, staff member who performed check-in, and initial condition. | §1.6 |
+| BR7 | Check-out (completion) records the actual end time, final condition, and usage notes. | §1.6 |
+| BR8 | Facility types are modeled as a lookup/list, not as individual physical asset units. | §1.3 |
+| BR9 | A space-facility assignment is uniquely identified by (SpaceCode, FacilityName). No surrogate FacilityID is needed. | §1.3 |
+| BR10 | The system must preserve historical records (bookings and maintenance) — no hard-deletion of past records. | §1.8 |
+| BR11 | The purpose of use is one of: Lecture, Examination, Seminar, Workshop, Meeting, StudentActivity, AdministrativeEvent. | §1.4 |
+| BR12 | Space capacity must be a positive integer (Capacity > 0). | §1.3 (implied) |
+| BR13 | Booking end time must be after start time (EndTime > StartTime). | §1.4 (implied) |
 
 ---
 
 ## 6. Assumptions
 
-- A booking request cannot have more than one approval decision; once decided, the decision is final (no re-approval).
-- The system does **not** handle room scheduling algorithms (e.g., auto-assignment) — it only records and validates requests.
-- Check-in and Check-out are separate operations performed by facility staff, not the requester.
-- A maintenance record is considered "active" (blocking bookings) when its status is *Reported* or *In Progress*.
-- A space may have zero facilities; facilities are tracked only as names (no inventory tracking).
-- The `Usage Policy` attribute on Space stores free-text rules (e.g., "No food allowed", "Max 2-hour booking").
+| # | Assumption |
+|---|-----------|
+| A1 | A booking request may optionally skip the approval step (direct approval) if it does not require it, but the Approval entity will still exist with a nullable reference or the status indicates no approval needed. For simplicity, we model Approval as a separate 1:1 table that is created when a decision is made. |
+| A2 | The `InUse` space status is set when a check-in occurs and cleared when check-out completes. Alternatively, it may be derived from active booking sessions. We will treat it as a derived/status field. |
+| A3 | Only users with role `FacilityStaff` or `FacilityManager` can act as approvers or check-in staff. |
+| A4 | Maintenance records can be reported by any user role, but only `FacilityStaff` or `FacilityManager` can be assigned as the responsible person. |
+| A5 | The system prevents overlapping bookings via application logic (since DDL alone cannot enforce time-interval overlap constraints). |
+| A6 | The `AccountStatus` field allows disabling a user (e.g., graduated, suspended) without deleting their historical records. |
 
 ---
 
 ## 7. Open Questions
 
-1. Should the system support recurring booking requests (e.g., weekly lectures for a full semester)?
-2. Should there be a maximum booking duration per user or per space?
-3. How are "no-show" bookings determined — automatically after a grace period, or manually by staff?
-4. Should facility staff be able to override overlapping-booking constraints in emergencies?
-5. Is there a hierarchy of approvers (e.g., large events require manager approval while small events can be approved by any staff)?
+| # | Question |
+|---|----------|
+| Q1 | Should certain space types only be bookable by certain roles (e.g., only lecturers can book auditoriums)? |
+| Q2 | Is there a maximum lead time or minimum notice period for booking requests? |
+| Q3 | Can a booking request be edited after submission, or must the user cancel and re-submit? |
+| Q4 | Should the system support recurring bookings (e.g., a lecture series for the whole semester)? |
+| Q5 | Are there any limits on the maximum duration of a single booking session? |
+| Q6 | Should notifications be sent when a booking is approved/rejected or when check-in is due? (Out of scope for DB design, but affects requirements) |
+| Q7 | What is the exact definition of "In Use" status for a space — is it set automatically upon check-in? |

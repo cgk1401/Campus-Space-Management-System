@@ -50,6 +50,8 @@
     - Computer
     - Livestreaming equipment
     - Air conditioner
+- Facilities are modeled as types (e.g., "Projector"), not individual physical units. 
+  A space-facility assignment is uniquely identified by (SpaceCode, FacilityName). No surrogate FacilityID is needed.
 
 **1.4. Booking Request Management**
 - Users can submit booking requests containing:
