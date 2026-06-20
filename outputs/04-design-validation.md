@@ -1,202 +1,164 @@
-# 04 — Database Design Validation
-
-## 1. ERD → Relational Schema Mapping
-
-### 1.1. Entity Coverage
-
-| ERD Entity | Logical Table | Status |
-|------------|--------------|--------|
-| User | [User] | ✅ Present |
-| Space | [Space] | ✅ Present |
-| Facility | [Facility] | ✅ Present |
-| BookingRequest | [BookingRequest] | ✅ Present |
-| Approval | [Approval] | ✅ Present |
-| UsageSession | [UsageSession] | ✅ Present |
-| MaintenanceRecord | [MaintenanceRecord] | ✅ Present |
-
-All 7 entities from the ERD are mapped to relational tables with no omissions.
+# 04 — Design Validation
 
 ---
 
-### 1.2. Relationship Mapping
+## 1. ERD-to-Schema Mapping Verification
 
-| ERD Relationship | Logical Implementation | Status |
-|-----------------|----------------------|--------|
-| R1: User (1) → BookingRequest (N) | `BookingRequest.RequesterID` FK → `User.UserID` | ✅ |
-| R2: Space (1) → BookingRequest (N) | `BookingRequest.SpaceCode` FK → `Space.SpaceCode` | ✅ |
-| R3: BookingRequest (1) → Approval (1) | `Approval.BookingID` FK (UNIQUE) → `BookingRequest.BookingID` | ✅ |
-| R4: User (1) → Approval (N) | `Approval.ApproverID` FK → `User.UserID` | ✅ |
-| R5: Space (1) → Facility (N) | `Facility.SpaceCode` FK → `Space.SpaceCode` | ✅ |
-| R6: Space (1) → MaintenanceRecord (N) | `MaintenanceRecord.SpaceCode` FK → `Space.SpaceCode` | ✅ |
-| R7: User (1) → MaintenanceRecord (N) [reporter] | `MaintenanceRecord.ReporterID` FK → `User.UserID` | ✅ |
-| R8: User (1) → MaintenanceRecord (N) [assigned] | `MaintenanceRecord.AssignedStaffID` FK (nullable) → `User.UserID` | ✅ |
-| R9: User (1) → UsageSession (N) [check-in staff] | `UsageSession.CheckInStaffID` FK → `User.UserID` | ✅ |
-| R10: BookingRequest (1) → UsageSession (1) | `UsageSession.BookingID` PK,FK → `BookingRequest.BookingID` | ✅ |
+| ERD Entity | Relational Table | Status |
+|-----------|-----------------|--------|
+| User | `User` | ✓ |
+| Space | `Space` | ✓ |
+| FacilityType | `FacilityType` | ✓ |
+| SpaceFacility | `SpaceFacility` | ✓ |
+| BookingRequest | `BookingRequest` | ✓ |
+| Approval | `Approval` | ✓ |
+| UsageSession | `UsageSession` | ✓ |
+| MaintenanceRecord | `MaintenanceRecord` | ✓ |
 
-All 10 relationships from the ERD are correctly mapped.
+| ERD Relationship | Mapping | Status |
+|-----------------|---------|--------|
+| User —o{ BookingRequest ("submits") | FK `BookingRequest.RequesterID` | ✓ |
+| BookingRequest }o—|| Space ("targets") | FK `BookingRequest.SpaceCode` | ✓ |
+| BookingRequest ||—o| Approval ("has") | PK/FK `Approval.BookingID` | ✓ |
+| User —o{ Approval ("decides") | FK `Approval.ApproverID` | ✓ |
+| BookingRequest ||—o| UsageSession ("records") | PK/FK `UsageSession.BookingID` | ✓ |
+| User —o{ UsageSession ("checks-in") | FK `UsageSession.CheckInStaffID` | ✓ |
+| Space —o{ SpaceFacility ("contains") | FK `SpaceFacility.SpaceCode` | ✓ |
+| FacilityType —o{ SpaceFacility ("typed-by") | FK `SpaceFacility.FacilityName` | ✓ |
+| User —o{ MaintenanceRecord ("reports") | FK `MaintenanceRecord.ReporterID` | ✓ |
+| User —o{ MaintenanceRecord ("assigned-to") | FK `MaintenanceRecord.AssignedStaffID` | ✓ |
+| Space —o{ MaintenanceRecord ("undergoes") | FK `MaintenanceRecord.SpaceCode` | ✓ |
 
----
-
-### 1.3. Participation Constraint Verification
-
-| Relationship | ERD Participation | Schema Enforcement | Status |
-|-------------|-------------------|-------------------|--------|
-| R1: User → BookingRequest | User: optional, Booking: mandatory | RequesterID = NOT NULL | ✅ |
-| R2: Space → BookingRequest | Space: optional, Booking: mandatory | SpaceCode = NOT NULL | ✅ |
-| R3: BookingRequest → Approval | Booking: optional, Approval: mandatory | BookingID in Approval = NOT NULL | ✅ |
-| R4: User → Approval | User: optional, Approval: mandatory | ApproverID = NOT NULL | ✅ |
-| R5: Space → Facility | Space: optional, Facility: mandatory | SpaceCode = NOT NULL | ✅ |
-| R6: Space → MaintenanceRecord | Space: optional, Maintenance: mandatory | SpaceCode = NOT NULL | ✅ |
-| R7: User → MaintenanceRecord [reporter] | User: optional, Maintenance: mandatory | ReporterID = NOT NULL | ✅ |
-| R8: User → MaintenanceRecord [assigned] | User: optional, Maintenance: optional | AssignedStaffID = NULL | ✅ |
-| R9: User → UsageSession | User: optional, Session: mandatory | CheckInStaffID = NOT NULL | ✅ |
-| R10: BookingRequest → UsageSession | Booking: optional, Session: mandatory | BookingID = NOT NULL | ✅ |
-
-All participation constraints are accurately enforced.
+**All 8 entities and 11 relationships from the ERD are correctly represented in the relational schema.** ✓
 
 ---
 
-## 2. Business Rule Satisfaction
+## 2. Business Rules Compliance
 
-| ID | Rule | Enforcement | Status |
-|----|------|-------------|--------|
-| BR1 | Unique Booking ID | `BookingID` is PK on `BookingRequest` | ✅ PK |
-| BR2 | No overlapping bookings | Noted as trigger/application-level constraint (beyond declarative CHECK) | ⚠️ Application-enforced |
-| BR3 | Unavailable space cannot be booked | Application must check `CurrentStatus` and active `MaintenanceRecord` | ⚠️ Application-enforced |
-| BR4 | Approval tracking | `Approval` table records `ApproverID`, `DecisionTime`, `DecisionNote`, `RejectionReason` | ✅ |
-| BR5 | Check-in/Check-out recording | `UsageSession` with actual start/end times, conditions, notes | ✅ |
-| BR6 | Maintenance blocks booking | Application checks active (Reported/InProgress) `MaintenanceRecord` | ⚠️ Application-enforced |
-| BR7 | Historical records | All tables use status fields; no physical deletes | ✅ |
-| BR8 | University account required | All user FKs reference `User` table | ✅ |
-| BR9 | Status lifecycle | CHECK constraint limits `BookingRequest.Status` to valid values | ✅ |
+| # | Rule | Enforceable via DDL? | Mechanism | Status |
+|---|------|---------------------|-----------|--------|
+| BR1 | Users must have a university account. | Yes | `User.UserID` as PK; all user fields are NOT NULL | ✓ |
+| BR2 | No overlapping bookings for same space. | No (interval overlap) | Application-level validation | ⚠️ *see §7* |
+| BR3 | Blocked spaces (Maint/Closed/Retired) cannot be booked. | Partial | `Space.CurrentStatus` CHECK constraint; application enforces check at booking time | ✓ |
+| BR4 | Active maintenance blocks booking. | No | Application-level check against unresolved `MaintenanceRecord` rows | ⚠️ *see §7* |
+| BR5 | Approval records approver, time, note, rejection reason. | Yes | `Approval` table includes all four columns | ✓ |
+| BR6 | Check-in records start time, staff, initial condition. | Yes | `UsageSession` has `ActualStartTime`, `CheckInStaffID`, `InitialCondition` | ✓ |
+| BR7 | Check-out records end time, final condition, notes. | Yes | `UsageSession` has `ActualEndTime`, `FinalCondition`, `UsageNotes` | ✓ |
+| BR8 | Facility types as lookup list, not individual units. | Yes | `FacilityType` table as controlled vocabulary | ✓ |
+| BR9 | Space-facility keyed by (SpaceCode, FacilityName). | Yes | Composite PK on `SpaceFacility` | ✓ |
+| BR10 | Preserve historical records. | Yes (design) | NO ACTION on historical FKs; soft-delete via status fields | ✓ |
+| BR11 | Purpose of use restricted to enumerated values. | Yes | CHECK on `BookingRequest.Purpose` | ✓ |
+| BR12 | Capacity > 0. | Yes | CHECK on `Space.Capacity` | ✓ |
+| BR13 | EndTime > StartTime. | Yes | CHECK on `BookingRequest.EndTime > BookingRequest.StartTime` | ✓ |
 
-**Key Observation:** Rules BR2, BR3, and BR6 require application-layer or trigger-based enforcement because they involve:
-- Temporal overlap detection (BR2) — not expressible as a simple CHECK constraint
-- Cross-table state validation (BR3, BR6) — queries must check Space statuses and active maintenance records at booking time
-
-These are correctly identified in the logical design as requiring application-level enforcement.
+**11 of 13 rules are fully DDL-enforceable. Rules BR2 and BR4 require application logic.** ✓
 
 ---
 
-## 3. Key & Constraint Analysis
+## 3. Key and Constraint Validation
 
 ### 3.1. Primary Keys
 
-| Table | PK | Assessment |
-|-------|----|-----------|
-| User | `UserID` (INT) | ✅ Surrogate key; Email is alternate candidate |
-| Space | `SpaceCode` (VARCHAR(20)) | ✅ Natural unique code; appropriate |
-| Facility | `FacilityID` (INT) | ✅ Surrogate key; dependent on Space |
-| BookingRequest | `BookingID` (INT) | ✅ Surrogate key |
-| Approval | `ApprovalID` (INT) | ✅ Surrogate key; `BookingID` is alternate unique |
-| UsageSession | `BookingID` (INT) | ✅ Shares PK with BookingRequest for 1:1 |
-| MaintenanceRecord | `MaintenanceID` (INT) | ✅ Surrogate key |
+| Table | PK | Rationale | Status |
+|-------|----|-----------|--------|
+| User | `UserID` (surrogate) | Natural keys (Email) are mutable; surrogate avoids cascading changes. | ✓ |
+| Space | `SpaceCode` (natural) | Business-provided unique code, stable identifier. | ✓ |
+| FacilityType | `FacilityName` (natural) | Short controlled vocabulary, no surrogate needed. | ✓ |
+| SpaceFacility | `(SpaceCode, FacilityName)` composite | Per BR9 — no surrogate needed. | ✓ |
+| BookingRequest | `BookingID` (surrogate) | No meaningful natural key; identity simplifies references. | ✓ |
+| Approval | `BookingID` (PK = parent FK) | 1:1 relationship; parent PK used as child PK per modeling rules. | ✓ |
+| UsageSession | `BookingID` (PK = parent FK) | 1:1 relationship; parent PK used as child PK per modeling rules. | ✓ |
+| MaintenanceRecord | `MaintenanceID` (surrogate) | No meaningful natural key. | ✓ |
 
-### 3.2. Foreign Keys — Referential Integrity
+### 3.2. Foreign Keys
 
-| FK | ON DELETE | Assessment |
-|----|-----------|-----------|
-| Facility.SpaceCode → Space | CASCADE | ✅ Correct — facility is existence-dependent on space |
-| BookingRequest.RequesterID → User | NO ACTION | ✅ Correct — prevents orphaned bookings on user deletion |
-| BookingRequest.SpaceCode → Space | NO ACTION | ✅ Correct — prevents orphaned bookings on space deletion |
-| Approval.BookingID → BookingRequest | CASCADE | ✅ Correct — approval is existence-dependent on booking |
-| Approval.ApproverID → User | NO ACTION | ✅ Correct — preserves audit trail |
-| UsageSession.BookingID → BookingRequest | CASCADE | ✅ Correct — session is existence-dependent on booking |
-| UsageSession.CheckInStaffID → User | NO ACTION | ✅ Correct — preserves audit trail |
-| MaintenanceRecord.SpaceCode → Space | CASCADE | ✅ Correct — record is existence-dependent on space |
-| MaintenanceRecord.ReporterID → User | NO ACTION | ✅ Correct — preserves audit trail |
-| MaintenanceRecord.AssignedStaffID → User | SET NULL | ✅ Correct — record persists if assignee leaves |
+| FK | Child Table | Parent Table | ON DELETE | Appropriate? |
+|----|------------|-------------|-----------|-------------|
+| RequesterID | BookingRequest | User | NO ACTION | ✓ History preservation |
+| SpaceCode | BookingRequest | Space | NO ACTION | ✓ History preservation |
+| BookingID | Approval | BookingRequest | CASCADE | ✓ No independent meaning |
+| ApproverID | Approval | User | NO ACTION | ✓ History preservation |
+| BookingID | UsageSession | BookingRequest | CASCADE | ✓ No independent meaning |
+| CheckInStaffID | UsageSession | User | NO ACTION | ✓ History preservation |
+| SpaceCode | SpaceFacility | Space | CASCADE | ✓ Current config only |
+| FacilityName | SpaceFacility | FacilityType | NO ACTION | ✓ Prevents orphaned refs |
+| SpaceCode | MaintenanceRecord | Space | NO ACTION | ✓ History preservation |
+| ReporterID | MaintenanceRecord | User | NO ACTION | ✓ History preservation |
+| AssignedStaffID | MaintenanceRecord | User | SET NULL | ✓ Optional FK; preserves record if staff leaves |
 
-### 3.3. CHECK Constraints
+### 3.3. Candidate Keys (UNIQUE constraints)
 
-| Table | Constraint | Assessment |
-|-------|-----------|-----------|
-| User | Role | ✅ Covers all 6 roles |
-| User | AccountStatus | ✅ Covers Active, Inactive, Suspended |
-| Space | SpaceType | ✅ Covers all 6 space types |
-| Space | CurrentStatus | ✅ Covers all 5 statuses |
-| Space | Capacity > 0 | ✅ Prevents invalid capacity |
-| Facility | FacilityName | ✅ Covers all 6 facility types (hardcoded — note: adding a new type requires schema change) |
-| BookingRequest | RequestedEndTime > RequestedStartTime | ✅ Prevents zero/negative duration |
-| BookingRequest | PurposeOfUse | ✅ Covers all 7 purposes |
-| BookingRequest | ExpectedParticipants > 0 | ✅ Prevents invalid participant count |
-| BookingRequest | Status | ✅ Covers all 7 statuses |
-| MaintenanceRecord | Status | ✅ Covers all 4 statuses |
+| Table | Candidate Key | Status |
+|-------|--------------|--------|
+| User | `Email` | ✓ |
+| Space | `(Building, Floor, RoomNumber)` | ✓ |
 
-### 3.4. Candidate Keys
+### 3.4. CHECK Constraints
 
-| Table | Candidate Keys | Status |
-|-------|---------------|--------|
-| User | UserID (PK), Email (UK) | ✅ |
-| Space | SpaceCode (PK) | ✅ — (Building, Floor, RoomNumber) could serve as natural composite key but surrogate is acceptable |
-| Facility | FacilityID (PK) | ✅ |
-| BookingRequest | BookingID (PK) | ✅ |
-| Approval | ApprovalID (PK), BookingID (UK) | ✅ |
-| UsageSession | BookingID (PK) | ✅ |
-| MaintenanceRecord | MaintenanceID (PK) | ✅ |
+| Constraint | Table | Status |
+|-----------|-------|--------|
+| Role IN (...) | User | ✓ |
+| AccountStatus IN ('Active','Disabled') | User | ✓ |
+| SpaceType IN (...) | Space | ✓ |
+| CurrentStatus IN (...) | Space | ✓ |
+| Capacity > 0 | Space | ✓ |
+| Purpose IN (...) | BookingRequest | ✓ |
+| Booking Status IN (...) | BookingRequest | ✓ |
+| EndTime > StartTime | BookingRequest | ✓ |
+| ExpectedParticipants > 0 | BookingRequest | ✓ |
+| Maintenance Status IN (...) | MaintenanceRecord | ✓ |
 
 ---
 
-## 4. Normalization Assessment
+## 4. Normalization Analysis
 
-| Table | NF | Assessment |
-|-------|----|-----------|
-| User | 3NF | ✅ No repeating groups, no partial/transitive dependencies |
-| Space | 3NF | ✅ All attributes depend only on SpaceCode |
-| Facility | 3NF | ✅ Dependent on SpaceCode via FK |
-| BookingRequest | 3NF | ✅ All attributes depend only on BookingID |
-| Approval | 3NF | ✅ All attributes depend only on ApprovalID |
-| UsageSession | 3NF | ✅ All attributes depend only on BookingID |
-| MaintenanceRecord | 3NF | ✅ All attributes depend only on MaintenanceID |
+### 4.1. Unnormalized Form (UNF) check
+No repeating groups or multi-valued attributes exist in any table. Every cell is atomic (1NF). ✓
 
-All tables satisfy at least **Third Normal Form (3NF)**. No denormalization was applied unnecessarily.
+### 4.2. Second Normal Form (2NF) check
+- All tables with single-column PKs: all non-key attributes depend on the whole PK. ✓
+- `SpaceFacility` has a composite PK but zero non-key attributes, so 2NF is trivially satisfied. ✓
 
----
+### 4.3. Third Normal Form (3NF) check
+- No transitive dependencies exist in any table. All non-key attributes are directly dependent on the PK. ✓
 
-## 5. Validation Against Summary Business Requirements Checklist
+### 4.4. Boyce-Codd Normal Form (BCNF) check
+- Every determinant in every table is a candidate key. The schema is in BCNF. ✓
 
-| Section | Requirement | Coverage | Status |
-|---------|------------|----------|--------|
-| 1.2 | User attributes (ID, Name, Email, Phone, Role, Dept, Status) | All present in [User] | ✅ |
-| 1.2 | User roles (6 types) | CHECK constraint covers all 6 | ✅ |
-| 1.3 | Space attributes (code, name, type, building, floor, room, capacity, status, policy) | All present in [Space] | ✅ |
-| 1.3 | Space statuses (5 values) | CHECK constraint covers all 5 | ✅ |
-| 1.3 | Facilities list (6 items) | [Facility] entity with CHECK constraint | ✅ |
-| 1.4 | Booking attributes (space, times, purpose, participants, status) | All present in [BookingRequest] | ✅ |
-| 1.4 | Booking statuses (7 values) | CHECK constraint covers all 7 | ✅ |
-| 1.4 | Conflict prevention (BR2) | Noted as application-enforced | ⚠️ |
-| 1.4 | Unavailable space restriction (BR3) | Noted as application-enforced | ⚠️ |
-| 1.5 | Approval tracking (approver, time, note, rejection reason) | All present in [Approval] | ✅ |
-| 1.6 | Check-in (start time, staff, initial condition) | All in [UsageSession] | ✅ |
-| 1.6 | Check-out (end time, final condition, notes) | All in [UsageSession] | ✅ |
-| 1.7 | Maintenance attributes (space, reporter, assignee, description, times, status, result) | All present in [MaintenanceRecord] | ✅ |
-| 1.7 | Maintenance blocks booking (BR6) | Noted as application-enforced | ⚠️ |
-| 1.8 | Historical records, booking history, upcoming bookings, maintenance view, no-show view | All data preserved; queryable via SELECT | ✅ |
+**Conclusion: The schema satisfies BCNF.** ✓
 
 ---
 
-## 6. Identified Observations & Potential Improvements
+## 5. Modeling Rules Compliance
 
-| # | Observation | Severity | Suggestion |
-|---|------------|----------|------------|
-| 1 | `Facility.FacilityName` CHECK is hardcoded to specific values | Low | Consider a lookup table (`FacilityType`) if extensibility is needed |
-| 2 | No `CheckOutStaffID` in `UsageSession` — staff completing the session is not recorded | Low | Not explicitly required, but could be useful for audit |
-| 3 | No CHECK ensuring `Approval.RejectionReason` IS NOT NULL when status is Rejected | Medium | Noted as "application-enforced" — a trigger could enforce this at DB level |
-| 4 | No CHECK ensuring `ExpectedParticipants` ≤ `Space.Capacity` | Low | Application-level validation is reasonable; not an error |
-| 5 | Overlapping booking prevention (BR2) relies entirely on application/trigger | Medium | An indexed view with unique constraint on (SpaceCode, time range) is an alternative in MS SQL Server |
-| 6 | Space status 'InUse' vs 'UnderMaintenance' — no explicit DB rule prevents booking when status is 'TemporarilyClosed' or 'Retired' | Medium | Application-enforced; noted correctly |
-| 7 | `BookingRequest.Status` values include both requester-driven ('Cancelled') and system-driven states — no constraint prevents illegal transitions (e.g., Rejected → Approved) | Low | Application should enforce state machine logic |
+| Rule from Skill | Compliance | Evidence |
+|----------------|-----------|----------|
+| Each named relationship represented explicitly | ✓ | 11 relationships, all with explicit FK/PK mappings |
+| 1:1 uses parent PK as child PK | ✓ | `Approval.BookingID` and `UsageSession.BookingID` |
+| Relationship attributes get their own table | ✓ | Approval (decision info), UsageSession (check-in/out info) |
+| Only junction table for M:N or attributed relationships | ✓ | SpaceFacility junction table for M:N; Approval/UsageSession for attributed 1:1 |
+| 1:N without attributes: FK on child table | ✓ | All 1:N relationships use FK on child |
 
 ---
 
-## 7. Validation Conclusion
+## 6. Role-Based Access Constraint Coverage
 
-| Criterion | Result |
-|-----------|--------|
-| Correctly represents the ERD | ✅ All entities, relationships, cardinalities, and participations are faithfully mapped |
-| Satisfies all business rules | ✅ All 9 business rules are addressed; 3 require application-layer enforcement (correctly identified) |
-| Appropriate keys, relationships, and constraints | ✅ PKs, FKs, UKs, CHECK constraints, DEFAULT values, and referential actions are correctly specified |
-| Normalization | ✅ All tables are in 3NF |
-| DBMS compatibility | ✅ Design uses MS SQL Server–compatible types (DATETIME2, VARCHAR, INT, TEXT) |
+| Constraint | Documented in Step 3? | Enforceable via DDL? |
+|-----------|----------------------|---------------------|
+| Only FacilityStaff/Manager can approve | ✓ (application-level) | No — role check requires application logic |
+| Only FacilityStaff/Manager can check-in | ✓ (application-level) | No — role check requires application logic |
+| Only FacilityStaff/Manager can be assigned maintenance | ✓ (application-level) | No — role check requires application logic |
+| Any role can report maintenance | ✓ (application-level) | No — no restriction needed |
 
-**Overall: The logical design is valid and ready to proceed to implementation (DDL).**
+---
+
+## 7. Identified Limitations & Notes
+
+| Issue | Description | Mitigation |
+|-------|-------------|------------|
+| Overlap prevention (BR2) | SQL CHECK cannot reference other rows. DDL alone cannot prevent overlapping time intervals for the same SpaceCode. | Must be enforced via a transactional application-level check or a schedule-based exclusion constraint (e.g., a trigger or indexed view with `UNIQUE` on `(SpaceCode, time_slot)` — though SQL Server does not natively support exclusion constraints). |
+| Active maintenance blocks booking (BR4) | Requires checking if any unresolved `MaintenanceRecord` exists for a SpaceCode at the time of booking. | Application-level validation before insert/update. |
+| Rejection reason required when rejected (BR5) | A CHECK constraint cannot conditionally require a column based on another table's value. | Application-level validation. |
+| Status transition integrity | Schema allows invalid transitions (e.g., 'Pending' → 'Completed' without 'CheckedIn'). | Application-level state machine enforcement. |
+| `InUse` space status | The `CurrentStatus` on `Space` is denormalized — it can be derived from active `UsageSession` records. Kept for query convenience but requires synchronization. | Application must update `Space.CurrentStatus` when sessions start/end, or derive it via a view. |
+| No upper bound on `Capacity` or `ExpectedParticipants` | Reasonable but not constrained. | Optional: add `CHECK (Capacity <= 1000)` or similar. |

@@ -1,221 +1,177 @@
-# 02 — Conceptual Database Design (ERD)
+# 02 — Conceptual Design (ERD)
 
-## 1. Entities & Attributes
-
-### 1.1. User
-
-| Attribute | Type | PK | Notes |
-|-----------|------|----|-------|
-| UserID | INT | PK | University account ID |
-| FullName | VARCHAR(100) | | |
-| Email | VARCHAR(100) | | |
-| PhoneNumber | VARCHAR(20) | | |
-| Role | VARCHAR(30) | | Student, Lecturer, TA, Facility Staff, Dept Admin, Facility Manager |
-| Department | VARCHAR(100) | | |
-| AccountStatus | VARCHAR(20) | | Active, Inactive, Suspended |
-
-### 1.2. Space
-
-| Attribute | Type | PK | Notes |
-|-----------|------|----|-------|
-| SpaceCode | VARCHAR(20) | PK | Unique identifier |
-| SpaceName | VARCHAR(100) | | |
-| SpaceType | VARCHAR(30) | | Auditorium, Classroom, Computer Lab, Project Lab, Meeting Room, Student Workspace |
-| Building | VARCHAR(50) | | |
-| Floor | INT | | |
-| RoomNumber | VARCHAR(20) | | |
-| Capacity | INT | | |
-| CurrentStatus | VARCHAR(20) | | Available, In Use, Under Maintenance, Temporarily Closed, Retired |
-| UsagePolicy | TEXT | | |
-
-### 1.3. Facility
-
-| Attribute | Type | PK | Notes |
-|-----------|------|----|-------|
-| FacilityID | INT | PK | |
-| FacilityName | VARCHAR(50) | | Projector, Whiteboard, Microphone, Computer, etc. |
-| SpaceCode | VARCHAR(20) | FK | References Space |
-
-### 1.4. BookingRequest
-
-| Attribute | Type | PK | Notes |
-|-----------|------|----|-------|
-| BookingID | INT | PK | |
-| RequesterID | INT | FK | References User |
-| SpaceCode | VARCHAR(20) | FK | References Space |
-| RequestedStartTime | DATETIME | | |
-| RequestedEndTime | DATETIME | | |
-| PurposeOfUse | VARCHAR(30) | | Lecture, Examination, Seminar, Workshop, Meeting, Student Activity, Administrative Event |
-| ExpectedParticipants | INT | | |
-| Status | VARCHAR(20) | | Pending, Approved, Rejected, Cancelled, Checked In, Completed, No-show |
-
-### 1.5. Approval
-
-| Attribute | Type | PK | Notes |
-|-----------|------|----|-------|
-| ApprovalID | INT | PK | |
-| BookingID | INT | FK | References BookingRequest (unique) |
-| ApproverID | INT | FK | References User |
-| DecisionTime | DATETIME | | |
-| DecisionNote | TEXT | | |
-| RejectionReason | TEXT | | Required only when Rejected |
-
-### 1.6. UsageSession
-
-| Attribute | Type | PK | Notes |
-|-----------|------|----|-------|
-| BookingID | INT | PK, FK | References BookingRequest |
-| ActualStartTime | DATETIME | | |
-| CheckInStaffID | INT | FK | References User |
-| InitialCondition | TEXT | | |
-| ActualEndTime | DATETIME | | |
-| FinalCondition | TEXT | | |
-| UsageNotes | TEXT | | |
-
-### 1.7. MaintenanceRecord
-
-| Attribute | Type | PK | Notes |
-|-----------|------|----|-------|
-| MaintenanceID | INT | PK | |
-| SpaceCode | VARCHAR(20) | FK | References Space |
-| ReporterID | INT | FK | References User |
-| AssignedStaffID | INT | FK | References User |
-| ProblemDescription | TEXT | | |
-| StartTime | DATETIME | | |
-| CompletionTime | DATETIME | | Nullable |
-| Status | VARCHAR(20) | | Reported, In Progress, Completed, Cancelled |
-| ResultNote | TEXT | | |
-
----
-
-## 2. Entity-Relationship Diagram (ERD)
+## 1. Entity-Relationship Diagram
 
 ```mermaid
 erDiagram
+    User ||--o{ BookingRequest : "submits"
+    BookingRequest }o--|| Space : "targets"
+    User ||--o{ Approval : "decides"
+    BookingRequest ||--o| Approval : "has"
+    User ||--o{ UsageSession : "checks-in"
+    BookingRequest ||--o| UsageSession : "records"
+    Space ||--o{ SpaceFacility : "contains"
+    FacilityType ||--o{ SpaceFacility : "typed-by"
+    User ||--o{ MaintenanceRecord : "reports"
+    User ||--o{ MaintenanceRecord : "assigned-to"
+    Space ||--o{ MaintenanceRecord : "undergoes"
+
     User {
         int UserID PK
-        varchar FullName
-        varchar Email
-        varchar PhoneNumber
-        varchar Role
-        varchar Department
-        varchar AccountStatus
+        string FullName
+        string Email
+        string PhoneNumber
+        string Role
+        string Department
+        string AccountStatus
     }
 
     Space {
-        varchar SpaceCode PK
-        varchar SpaceName
-        varchar SpaceType
-        varchar Building
+        string SpaceCode PK
+        string SpaceName
+        string SpaceType
+        string Building
         int Floor
-        varchar RoomNumber
+        string RoomNumber
         int Capacity
-        varchar CurrentStatus
-        text UsagePolicy
+        string CurrentStatus
+        string UsagePolicy
     }
 
-    Facility {
-        int FacilityID PK
-        varchar FacilityName
-        varchar SpaceCode FK
+    FacilityType {
+        string FacilityName PK
+    }
+
+    SpaceFacility {
+        string SpaceCode PK, FK
+        string FacilityName PK, FK
     }
 
     BookingRequest {
         int BookingID PK
         int RequesterID FK
-        varchar SpaceCode FK
-        datetime RequestedStartTime
-        datetime RequestedEndTime
-        varchar PurposeOfUse
+        string SpaceCode FK
+        datetime StartTime
+        datetime EndTime
+        string Purpose
         int ExpectedParticipants
-        varchar Status
+        string Status
     }
 
     Approval {
-        int ApprovalID PK
-        int BookingID FK
+        int BookingID PK, FK
         int ApproverID FK
         datetime DecisionTime
-        text DecisionNote
-        text RejectionReason
+        string DecisionNote
+        string RejectionReason
     }
 
     UsageSession {
-        int BookingID PK
-        datetime ActualStartTime
+        int BookingID PK, FK
         int CheckInStaffID FK
-        text InitialCondition
+        datetime ActualStartTime
+        string InitialCondition
         datetime ActualEndTime
-        text FinalCondition
-        text UsageNotes
+        string FinalCondition
+        string UsageNotes
     }
 
     MaintenanceRecord {
         int MaintenanceID PK
-        varchar SpaceCode FK
+        string SpaceCode FK
         int ReporterID FK
         int AssignedStaffID FK
-        text ProblemDescription
+        string ProblemDescription
         datetime StartTime
         datetime CompletionTime
-        varchar Status
-        text ResultNote
+        string Status
+        string ResultNote
     }
-
-    User ||--o{ BookingRequest : "submits"
-    Space ||--o{ BookingRequest : "is booked by"
-    BookingRequest ||--o| Approval : "has"
-    User ||--o{ Approval : "approves"
-    Space ||--o{ Facility : "contains"
-    Space ||--o{ MaintenanceRecord : "has"
-    User ||--o{ MaintenanceRecord : "reports"
-    User ||--o{ MaintenanceRecord : "is assigned to"
-    User ||--o{ UsageSession : "checks in"
-    BookingRequest ||--o| UsageSession : "has"
 ```
 
 ---
 
-## 3. Relationship Details
+## 2. Relationships Detail
 
-| # | Left Entity | Left Cardinality | Relationship | Right Cardinality | Right Entity | Left Part. | Right Part. |
-|---|-------------|:-:|:-:|:-:|-------------|:-:|:-:|
-| R1 | User | 1 | submits | N | BookingRequest | Optional | Mandatory |
-| R2 | Space | 1 | is booked by | N | BookingRequest | Optional | Mandatory |
-| R3 | BookingRequest | 1 | has | 1 | Approval | Optional | Mandatory |
-| R4 | User | 1 | approves | N | Approval | Optional | Mandatory |
-| R5 | Space | 1 | contains | N | Facility | Optional | Mandatory |
-| R6 | Space | 1 | has | N | MaintenanceRecord | Optional | Mandatory |
-| R7 | User | 1 | reports | N | MaintenanceRecord | Optional | Mandatory |
-| R8 | User | 1 | is assigned to | N | MaintenanceRecord | Optional | Optional |
-| R9 | User | 1 | checks in | N | UsageSession | Optional | Mandatory |
-| R10 | BookingRequest | 1 | has | 1 | UsageSession | Optional | Mandatory |
+### 2.1. User — BookingRequest ("submits")
+- **Cardinality:** 1:N (one user may submit many booking requests; each booking request belongs to exactly one user).
+- **Participation:** User (optional) — not every user needs a booking; BookingRequest (mandatory).
+- **FK:** `BookingRequest.RequesterID` → `User.UserID`
 
-### Participation Explanation
+### 2.2. BookingRequest — Space ("targets")
+- **Cardinality:** N:1 (many booking requests may target the same space; each booking request targets exactly one space).
+- **Participation:** BookingRequest (mandatory); Space (optional) — a space may have zero bookings.
+- **FK:** `BookingRequest.SpaceCode` → `Space.SpaceCode`
 
-- **R1 — User submits BookingRequest:** A User may submit zero or many bookings (optional). Every BookingRequest must belong to exactly one User (mandatory).
-- **R2 — Space is booked by BookingRequest:** A Space may have zero or many bookings (optional). Every BookingRequest must reference exactly one Space (mandatory).
-- **R3 — BookingRequest has Approval:** A BookingRequest may have at most one Approval (optional — e.g., pending bookings have none). Every Approval must correspond to exactly one BookingRequest (mandatory).
-- **R4 — User approves Approval:** A User (with Facility Staff or Manager role) may approve/reject zero or many bookings (optional). Every Approval must have exactly one Approver (mandatory).
-- **R5 — Space contains Facility:** A Space may have zero or many Facilities (optional). Every Facility must belong to exactly one Space (mandatory).
-- **R6 — Space has MaintenanceRecord:** A Space may have zero or many maintenance records (optional). Every MaintenanceRecord must reference exactly one Space (mandatory).
-- **R7 — User reports MaintenanceRecord:** A User may report zero or many issues (optional). Every MaintenanceRecord must have exactly one Reporter (mandatory).
-- **R8 — User is assigned to MaintenanceRecord:** A User (Facility Staff) may be assigned zero or many maintenance tasks (optional). A MaintenanceRecord may have zero or one AssignedStaff (optional — can be unassigned initially).
-- **R9 — User checks in UsageSession:** A User (Facility Staff) may check in zero or many bookings (optional). Every UsageSession must record exactly one check-in staff member (mandatory).
-- **R10 — BookingRequest has UsageSession:** A BookingRequest may have at most one UsageSession (optional — not yet checked in). Every UsageSession corresponds to exactly one BookingRequest (mandatory).
+### 2.3. BookingRequest — Approval ("has")
+- **Cardinality:** 1:1 (each booking request has at most one approval record; each approval record belongs to exactly one booking request).
+- **Participation:** Approval (mandatory — when a decision is made, a record is created); BookingRequest (optional — not all bookings require approval / decision may be pending).
+- **FK:** `Approval.BookingID` → `BookingRequest.BookingID`
+- **Role-Based Access:** Only users with roles `FacilityStaff` or `FacilityManager` may act as the approver (`Approval.ApproverID`).
+
+### 2.4. User — Approval ("decides")
+- **Cardinality:** 1:N (one user may approve/reject many bookings; each approval record has exactly one approver).
+- **Participation:** User (optional); Approval (mandatory).
+- **FK:** `Approval.ApproverID` → `User.UserID`
+
+### 2.5. BookingRequest — UsageSession ("records")
+- **Cardinality:** 1:1 (each booking request that is checked in produces at most one usage session; each usage session belongs to exactly one booking).
+- **Participation:** UsageSession (mandatory when check-in occurs); BookingRequest (optional — booking may be cancelled/rejected before check-in).
+- **FK:** `UsageSession.BookingID` → `BookingRequest.BookingID`
+
+### 2.6. User — UsageSession ("checks-in")
+- **Cardinality:** 1:N (one staff member may check in many bookings; each usage session has exactly one check-in staff).
+- **Participation:** User (optional); UsageSession (mandatory).
+- **FK:** `UsageSession.CheckInStaffID` → `User.UserID`
+- **Role-Based Access:** Only users with roles `FacilityStaff` or `FacilityManager` may act as check-in staff.
+
+### 2.7. Space — SpaceFacility ("contains")
+- **Cardinality:** 1:N (one space may have many facility assignments; each assignment belongs to one space).
+- **Participation:** Space (optional); SpaceFacility (mandatory).
+- **FK:** `SpaceFacility.SpaceCode` → `Space.SpaceCode`
+
+### 2.8. FacilityType — SpaceFacility ("typed-by")
+- **Cardinality:** 1:N (one facility type may appear in many space assignments; each assignment references one facility type).
+- **Participation:** FacilityType (optional); SpaceFacility (mandatory).
+- **FK:** `SpaceFacility.FacilityName` → `FacilityType.FacilityName`
+
+### 2.9. User — MaintenanceRecord ("reports")
+- **Cardinality:** 1:N (one user may report many maintenance issues; each maintenance record has exactly one reporter).
+- **Participation:** User (optional); MaintenanceRecord (mandatory).
+- **FK:** `MaintenanceRecord.ReporterID` → `User.UserID`
+
+### 2.10. User — MaintenanceRecord ("assigned-to")
+- **Cardinality:** 1:N (one staff member may be assigned many maintenance tasks; each maintenance record may be assigned to at most one staff member).
+- **Participation:** User (optional); MaintenanceRecord (optional — a record may be unassigned).
+- **FK:** `MaintenanceRecord.AssignedStaffID` → `User.UserID`
+- **Role-Based Access:** Only users with roles `FacilityStaff` or `FacilityManager` may be assigned as the responsible staff member.
+
+### 2.11. Space — MaintenanceRecord ("undergoes")
+- **Cardinality:** 1:N (one space may have many maintenance records; each maintenance record is for exactly one space).
+- **Participation:** Space (optional); MaintenanceRecord (mandatory).
+- **FK:** `MaintenanceRecord.SpaceCode` → `Space.SpaceCode`
 
 ---
 
-## 4. Business Rule Mapping
+## 3. Role-Based Access Summary
 
-| Rule | ERD Enforcement |
-|------|----------------|
-| BR1 — Unique Booking ID | BookingRequest.BookingID is PK |
-| BR2 — No overlapping bookings | Application-enforced (cannot be expressed directly in ERD); noted as a system constraint |
-| BR3 — Unavailable space cannot be booked | Application checks Space.CurrentStatus and MaintenanceRecord.Status before allowing booking |
-| BR4 — Approval tracking | Approval entity records ApproverID, DecisionTime, DecisionNote, RejectionReason |
-| BR5 — Check-in/Check-out recording | UsageSession entity captures all required fields |
-| BR6 — Maintenance blocks booking | Application must check active MaintenanceRecord for the Space |
-| BR7 — Historical records | Entities preserve data (no deletion); status fields distinguish active vs historical |
-| BR8 — University account required | User entity is the anchor; all requesters reference User |
-| BR9 — Status lifecycle | BookingRequest.Status attribute tracks the lifecycle state |
+| Action | Allowed Roles |
+|--------|--------------|
+| Submit a booking request | Student, Lecturer, TeachingAssistant, DepartmentAdministrator |
+| Approve / reject bookings | FacilityStaff, FacilityManager |
+| Check-in / check-out bookings | FacilityStaff, FacilityManager |
+| Report maintenance | All roles |
+| Be assigned to maintenance | FacilityStaff, FacilityManager |
+| View reports / history | FacilityStaff, DepartmentAdministrator, FacilityManager |
+
+---
+
+## 4. Design Decisions
+
+| Decision | Rationale |
+|----------|-----------|
+| Approval as a separate entity (1:1) with BookingID as PK | The relationship has its own attributes (decision time, note, rejection reason). Per modeling rules, relationship attributes should not be folded into one of the participating entity tables. |
+| UsageSession as a separate entity (1:1) with BookingID as PK | Same rationale — check-in/out has its own attributes. |
+| SpaceFacility as a junction table | Space-to-FacilityType is M:N. The junction table has no extra attributes but is required per modeling rules for M:N relationships. |
+| No surrogate key for Approval / UsageSession | Per modeling rules: for 1:1 relationships, use the parent PK as the child PK. |
+| Separate FacilityType entity | Ensures facility names are consistent and controlled via a lookup table rather than free-text. |

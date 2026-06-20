@@ -16,4 +16,4 @@ Read the structured summary from:
 
 INSTRUCTIONS:
 1. We will work step-by-step. Do NOT execute all steps at once.
-2. For now, ONLY execute Phase 1 - Task 7 : Query Design.
+2. For now, ONLY execute Phase 1 - Step 1: Business Requirement Analysis, then stop reporting and wait for my approval before proceeding to the next step.
