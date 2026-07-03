@@ -76,7 +76,7 @@ ORDER BY s.SpaceCode, m.StartTime DESC;
 |-------|-------|
 | **Business Question** | What is the total booked time (in precision hours) and average participants per space type over the last 30 days? |
 | **Target User(s)** | Facility Manager, Department Administrator |
-| **Explanation** | VÁ LỖI STAGE 1: Sử dụng tính toán mức MINUTE chia cho 60.0 để tránh lỗi làm tròn/đếm sai mốc giờ của hàm `DATEDIFF(HOUR)`. Giúp dữ liệu báo cáo đạt độ chính xác tuyệt đối ở dạng số thập phân. |
+| **Explanation** | STAGE 1 FIX: Uses MINUTE-level calculation divided by 60.0 to prevent rounding errors or incorrect hour counts from the DATEDIFF(HOUR) function. This ensures report data achieves absolute precision in decimal format. |
 
 ```sql
 SELECT
@@ -138,7 +138,7 @@ ORDER BY b.StartTime DESC;
 |-------|-------|
 | **Business Question** | Which available spaces have never had a maintenance record or have not had maintenance in the past 6 months? |
 | **Target User(s)** | Facility Manager, Facility Staff |
-| **Explanation** | VÁ LỖI STAGE 1: Tích hợp mệnh đề `NOT EXISTS` để cô lập, loại bỏ hoàn toàn các phòng đang có sự cố active chưa giải quyết (`Open` hoặc `InProgress`), đảm bảo danh sách gợi ý bảo trì phòng ngừa chỉ hiển thị các phòng thực sự sạch lỗi. |
+| **Explanation** | STAGE 1 FIX: Integrates the NOT EXISTS clause to isolate and completely exclude spaces with active, unresolved issues (Open or InProgress), ensuring the preventive maintenance suggestion list only displays spaces that are truly error-free. |
 
 ```sql
 SELECT
@@ -176,7 +176,7 @@ ORDER BY LastMaintenanceCompletion ASC;
 |-------|-------|
 | **Business Question** | Is a specific space (e.g., 'CS-101') available for booking on a given date and time range? |
 | **Target User(s)** | All users (Students, Lecturers, TAs, Staff) |
-| **Explanation** | VÁ LỖI STAGE 1: Chuyển đổi `LEFT JOIN` thô sơ thành cấu trúc `OUTER APPLY` cô lập bản ghi. Tránh hoàn toàn lỗi nhân bản dòng (Row Multiplication Violation) khi một phòng chức năng dính nhiều đơn trùng lịch trong cùng khung giờ khảo sát. |
+| **Explanation** | STAGE 1 FIX: Converts a basic LEFT JOIN into a record-isolating OUTER APPLY structure. This completely prevents row multiplication violations when a functional space has multiple overlapping bookings within the surveyed timeframe. |
 
 ```sql
 DECLARE @TargetSpace NVARCHAR(20) = 'CS-101';
@@ -220,7 +220,7 @@ WHERE s.SpaceCode = @TargetSpace;
 |-------|-------|
 | **Business Question** | What is the current maintenance workload for each facility staff member (open and in-progress tasks)? |
 | **Target User(s)** | Facility Manager |
-| **Explanation** | VÁ LỖI STAGE 1: Thay thế `INNER JOIN` bằng `LEFT JOIN` và chuyển điều kiện lọc trạng thái từ mệnh đề `WHERE` vào trực tiếp mệnh đề `ON`. Giúp giữ lại thông tin của các nhân sự đang "rảnh rỗi" (0 task) phục vụ phân bổ công việc công bằng. |
+| **Explanation** | **STAGE 1 FIX:** Replaced `INNER JOIN` with `LEFT JOIN` and moved the status filter condition from the `WHERE` clause directly into the `ON` clause. This helps retain records of "idle" staff (0 tasks) to facilitate fair workload distribution. |
 
 ```sql
 SELECT

@@ -97,7 +97,7 @@ GO
 
 ## 5. Booking Requests & Vòng đời Đơn hàng (Sử dụng Khóa Động & ISO 8601)
 
-Để khắc phục rủi ro lệch seed `IDENTITY` từ Stage 1, toàn bộ phần nạp dữ liệu dưới đây sử dụng biến bảng để bắt ID tự động, đồng thời chuẩn hóa mốc thời gian động theo ngày chạy thực tế (`GETDATE()`) giúp các truy vấn thống kê của Step 7 không bị trống lịch sử theo thời gian.
+To mitigate the risk of IDENTITY seed misalignment from Stage 1, the entire data seeding section below utilizes table variables to automatically capture IDs. Additionally, it normalizes dynamic timestamps based on the actual execution date (GETDATE()), ensuring that the statistical queries in Step 7 do not result in empty historical data over time.
 
 ```sql
 -- Khai báo biến bảng lưu vết ID động
