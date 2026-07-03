@@ -86,7 +86,7 @@ end
 
 %%================ DATABASE =====================
 subgraph Validation["Database Validation"]
-    SQL["🗄️ Microsoft SQL Server"]
+    SQL["Microsoft SQL Server"]
 end
 
 A --> C
