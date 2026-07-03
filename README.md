@@ -1,165 +1,146 @@
-# Project Campus Space Management System
+# Database Design Agent Project
 
-## 1. Business requirement description 
+This project aims to build and improve an AI agent that reads a business requirement and generates database design artifacts, from requirement analysis to SQL query design.
 
-**1.1. System Overview**
-- The School wants to develop a system to manage the booking and usage of shared campus spaces such as:
-    - Classrooms
-    - Computer laboratories
-    - Meeting rooms
-    - Auditoriums
+## 1. Getting Started with OpenCode
 
-**1.2. User Management**
-- Each user must have a university account. The system stores basic user information, including:
-    - User ID
-    - Full name
-    - Email
-    - Phone number
-    - Role
-    - Department
-    - Account status
-- A user role may be:
-    - Student
-    - Lecturer
-    - Teaching assistant
-    - Facility staff
-    - Department administrator
-    - Facility manager
+**OpenCode Installation Guide:** [https://opencode.ai/docs/](https://opencode.ai/docs/)
 
-**1.3. Space & Facility Management**
-- For each space, the system stores: 
-    - Space code (unique)
-    - Space name
-    - Space type
-    - Building
-    - Floor
-    - Room number
-    - Capacity
-    - Current status
-    - Usage policy
-- A space status may be:
-    - Available
-    - In use
-    - Under maintenance
-    - Temporarily closed
-    - Retired
-- Each space may have a list of facilities, such as:
-    - Projector
-    - Whiteboard
-    - Microphone
-    - Computer
-    - Livestreaming equipment
-    - Air conditioner
+After installation, open the project folder in your terminal and start OpenCode:
 
-**1.4. Booking Request Management**
-- Users can submit booking requests containing:
-    - Selected space
-    - Requested start time & end time
-    - Purpose of use
-    - Expected number of participants
-- Purpose of use includes:
-    - Lecture, Examination, Seminar, Workshop, Meeting, Student activity, Administrative event.
-- Booking status includes:
-    - Pending, Approved, Rejected, Cancelled, Checked in, Completed, No-show.
-- **Booking Constraints (System Rules):**
-    - Prevent conflicting/overlapping bookings for the same space.
-    - Spaces that are *Under maintenance*, *Temporarily closed*, or *Retired* CANNOT be booked.
+```bash
+cd path/to/your/project
+opencode
+```
 
-**1.5. Approval Process**
-- Bookings may require approval from a facility staff member or manager.
-- System must record:
-    - Approver (staff member who made the decision)
-    - Decision time
-    - Decision note
-    - Rejection reason (if rejected)
+### Connect OpenCode to an LLM Model
 
-**1.6. Usage Session (Check-in & Check-out)**
-- **Check-in (Arrival):** Records actual start time, staff who checked in, and initial condition of the space.
-- **Completion (End):** Records actual end time, final condition of the space, and usage notes.
+You must connect OpenCode to at least one LLM provider before running the database design agent.
+*   **Provider guide:** [https://opencode.ai/docs/providers/](https://opencode.ai/docs/providers/)
+*   **Model guide:** [https://opencode.ai/docs/models/](https://opencode.ai/docs/models/)
 
-**1.7. Maintenance Management**
-- System tracks maintenance records for issues like broken equipment, damaged furniture, or network problems.
-- Each maintenance record stores:
-    - Related space
-    - Reporter
-    - Assigned staff member
-    - Problem description
-    - Start time & Completion time
-    - Status
-    - Result note
-- **Constraint:** A space under maintenance CANNOT be booked.
+Inside the OpenCode terminal, run the following commands:
 
-**1.8. Reporting & History**
-- The system must keep historical records of bookings and maintenance.
-- Staff can view:
-    - Booking history
-    - Upcoming bookings
-    - Spaces under maintenance
-    - No-show bookings
+1.  **Connect Provider:** Run `/connect` and select your preferred LLM provider (e.g., OpenAI, Anthropic, Gemini, OpenRouter).
+2.  **Select Model:** Run `/models` and choose the specific model you want to use for the project.
 
-**1.9. Main System Goals**
-- Manage shared spaces fairly.
-- Avoid overlapping bookings.
-- Prevent the use of unavailable spaces.
-- Preserve usage history.
+---
 
-Hiểu rồi! Bạn muốn bám sát chính xác cấu trúc là **"2. Phase 1"** và bổ sung thêm bước số 1 (Business Requirement Analysis) mà lúc nãy chưa có. 
+## 2. Project Structure
 
-Dưới đây là bản tóm tắt và định dạng lại cực kỳ chuẩn xác, sạch sẽ theo đúng format gạch đầu dòng để bạn ghép nối tiếp vào phần 1 ở trên:
+The Git repository includes the following files and folders. You can adapt it as needed:
 
-***
+```text
+.
+├── .opencode/
+│   ├── commands/
+│   │   └── design-db.md               
+│   └── skills/
+│       └── db-design-pipeline/
+│           ├── templates/               
+│           └── SKILL.md                 
+├── req/
+│   ├── business-requirement.md          
+│   └── summary-business-requirement.md  
+├── outputs/                             
+├── AGENTS.md                            
+├── README.md                         
+└── .gitignore
+```
 
-## 2. Phase 1 (Project Tasks)
+---
 
-**2.1. Business Requirement Analysis**
-- Analyze the business requirements to identify:
-    - Business purpose
-    - Actors (Users)
-    - Entities & Attributes
-    - Relationships & Cardinalities
-    - Business rules
+## 3. Project Architecture
+```mermaid
+flowchart LR
 
-**2.2. Conceptual Database Design**
-- Design an Entity-Relationship Diagram (ERD).
-- The ERD must show: 
-    - Main entities & attributes
-    - Relationships
-    - Cardinalities (e.g., 1:1, 1:N, M:N)
-    - Participation constraints (mandatory/optional)
+%%================ INPUT =====================
+subgraph Input["Input Preparation"]
+    A["business-requirement.md"]
+    G["LLM (e.g., Gemini Pro)"]
+    B["summary-business-requirement.md"]
 
-**2.3. Logical Database Design**
-- Convert the ERD into a Relational Schema.
-- The schema must define:
-    - Relations (tables) & attributes
-    - Primary Keys (PK) & Foreign Keys (FK)
-    - Candidate keys
-    - Key constraints
+    A --> G --> B
+end
 
-**2.4. Database Design Validation**
-- Evaluate the relational schema to ensure it:
-    - Correctly represents the ERD.
-    - Satisfies all business rules.
-    - Uses appropriate keys, relationships, and constraints.
+%%================ AI =====================
+subgraph AI["AI Database Design Agent"]
+    C["OpenCode"]
+    D["Selected LLM Model"]
 
-**2.5. Database Implementation**
-- Implement the database using SQL DDL (Data Definition Language).
-- The SQL script must include:
-    - Tables
-    - Keys (PK, FK)
-    - Constraints & `CHECK` conditions
-    - `DEFAULT` values where appropriate
+    C <--> D
+end
 
-**2.6. Sample Data Preparation**
-- Insert realistic sample data using SQL DML.
-- Data must support testing of:
-    - Normal operations (standard workflow).
-    - Important exceptional cases (e.g., conflicting bookings, invalid data).
+%%================ OUTPUT =====================
+subgraph Pipeline["Database Design Pipeline"]
+    E1["Business Requirement Analysis"]
+    E2["Conceptual ERD"]
+    E3["Logical Database Design"]
+    E4["Design Validation"]
+    E5["SQL DDL"]
+    E6["Sample Data"]
+    E7["SQL Query Design"]
 
-**2.7. Query Design**
-- **Requirement:** Each student must design and execute **at least 5 meaningful SQL queries**.
-- Queries must be valid for the database and useful for answering real business questions.
-- **For EACH query, the following details must be included:**
-    - **Business question:** What information is needed?
-    - **Target user(s):** Who would use this query? (e.g., Facility Manager)
-    - **Short explanation:** Why is this query useful for the business?
-    - **SQL statement:** The actual SQL code.
+    E1 --> E2 --> E3 --> E4 --> E5 --> E6 --> E7
+end
+
+%%================ DATABASE =====================
+subgraph Validation["Database Validation"]
+    SQL["🗄️ Microsoft SQL Server"]
+end
+
+A --> C
+B --> C
+D --> E1
+E5 --> SQL
+E6 --> SQL
+E7 --> SQL
+```
+
+---
+
+## 4. Main Files and Folders
+
+| File / Folder | Purpose |
+|---|---|
+| `.opencode/` | Stores OpenCode commands, skills, and related configurations. |
+| `.opencode/commands/design-db.md` | Defines the custom command used to trigger the database design pipeline. |
+| `.opencode/skills/db-design-pipeline/SKILL.md` | Defines the agent workflow, rules, design steps, and output requirements. |
+| `.opencode/skills/db-design-pipeline/templates/` | Stores templates used by the agent to generate consistent outputs. |
+| `req/business-requirement.md` | Contains the original input business requirement. |
+| `req/summary-business-requirement.md`| Contains the structured summary of the business requirement used as a strict checklist. |
+| `outputs/` | Stores all generated project artifacts (Markdown files & SQL scripts). |
+| `AGENTS.md` | Contains project-level instructions and personas for the agent. |
+| `README.md` | Explains how to install, run, and evaluate the project. |
+| `.gitignore` | Excludes private or unnecessary files from Git. |
+
+---
+
+## 5. How to Run the Agent
+
+To ensure high-quality outputs, **the agent is configured to work step-by-step**. The execution is controlled by updating the instruction block inside the command file.
+
+**Step 1: Execute Task 1**
+By default, the `.opencode/commands/design-db.md` file is configured to run only Step 1. Run the custom command in the OpenCode terminal:
+```text
+/design-db req/business-requirement.md
+```
+*The agent will analyze the requirements and generate `outputs/01-business-req-analysis.md`.*
+
+**Step 2: Proceed Iteratively to Next Steps**
+Once a step is completed and reviewed, you move to the next step by updating the command configuration:
+
+1. Open `.opencode/commands/design-db.md`.
+2. Locate the `INSTRUCTIONS:` section at the bottom of the file.
+3. Update the text to target the next step. For example, to run Step 2, change it to:
+   ```markdown
+   INSTRUCTIONS:
+   1. We will work step-by-step. Do NOT execute all steps at once.
+   2. For now, ONLY execute Step 2: Conceptual Design / ERD based on the file outputs/01-business-req-analysis.md, then stop reporting and wait for my approval before proceeding to the next step.
+   ```
+4. Save the file and **re-run the exact same command** in the terminal:
+   ```text
+   /design-db req/business-requirement.md
+   ```
+
+Repeat this iterative process until all 7 steps are successfully completed.
