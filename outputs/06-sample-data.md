@@ -1,4 +1,4 @@
-# 06 — Sample Data
+# 06 — Sample Data (Revised & Optimized)
 
 **DBMS:** Microsoft SQL Server (T-SQL)
 
@@ -95,44 +95,100 @@ GO
 
 ---
 
-## 5. Booking Requests
+## 5. Booking Requests & Vòng đời Đơn hàng (Sử dụng Khóa Động & ISO 8601)
+
+Để khắc phục rủi ro lệch seed `IDENTITY` từ Stage 1, toàn bộ phần nạp dữ liệu dưới đây sử dụng biến bảng để bắt ID tự động, đồng thời chuẩn hóa mốc thời gian động theo ngày chạy thực tế (`GETDATE()`) giúp các truy vấn thống kê của Step 7 không bị trống lịch sử theo thời gian.
 
 ```sql
+-- Khai báo biến bảng lưu vết ID động
+DECLARE @BookingIDs TABLE (
+    ListIndex INT,
+    BookingID INT
+);
+
+DECLARE @B1 INT, @B2 INT, @B3 INT, @B4 INT, @B5 INT, @B6 INT, @B7 INT, @B8 INT;
+
+-- (1) Đơn số 1: Hoàn thành (Quá khứ 5 ngày trước)
 INSERT INTO BookingRequest (RequesterID, SpaceCode, StartTime, EndTime, Purpose, ExpectedParticipants, Status)
-VALUES
--- (1) Full lifecycle: Pending → Approved → CheckedIn → Completed
-(8, 'CS-201', '2026-06-02 09:00', '2026-06-02 11:00', 'StudentActivity',      20,  'Completed'),
--- (2) Checked in, session in progress (no check-out yet)
-(4, 'CS-101', '2026-06-02 08:00', '2026-06-02 10:00', 'Lecture',              35,  'CheckedIn'),
--- (3) Pending — awaiting approval
-(8, 'WRK-02', '2026-06-03 14:00', '2026-06-03 17:00', 'StudentActivity',       5,  'Pending'),
--- (4) Approved, waiting for check-in
-(6, 'CS-301', '2026-06-04 13:00', '2026-06-04 14:30', 'Meeting',               8,  'Approved'),
--- (5) Full lifecycle: Completed
-(4, 'AUDI-A', '2026-06-05 10:00', '2026-06-05 12:00', 'Seminar',             150,  'Completed'),
--- (6) Rejected — capacity exceeded
-(9, 'CS-101', '2026-06-06 09:00', '2026-06-06 10:30', 'StudentActivity',      50,  'Rejected'),
--- (7) Approved then cancelled
-(7, 'CS-301', '2026-06-07 10:00', '2026-06-07 12:00', 'AdministrativeEvent',   5,  'Cancelled'),
--- (8) No-show — never checked in
-(8, 'CS-101', '2026-06-08 09:00', '2026-06-08 11:00', 'StudentActivity',      10,  'NoShow');
+VALUES (8, 'CS-201', 
+        DATEADD(hour, 9, CAST(DATEADD(day, -5, GETDATE()) AS DATETIME2)), 
+        DATEADD(hour, 11, CAST(DATEADD(day, -5, GETDATE()) AS DATETIME2)), 
+        'StudentActivity', 20, 'Completed');
+SET @B1 = SCOPE_IDENTITY();
+
+-- (2) Đơn số 2: Đang diễn ra ngay tại thời điểm hiện tại (CheckedIn)
+INSERT INTO BookingRequest (RequesterID, SpaceCode, StartTime, EndTime, Purpose, ExpectedParticipants, Status)
+VALUES (4, 'CS-101', 
+        DATEADD(hour, -1, GETDATE()), 
+        DATEADD(hour, 2, GETDATE()), 
+        'Lecture', 35, 'CheckedIn');
+SET @B2 = SCOPE_IDENTITY();
+
+-- (3) Đơn số 3: Đang chờ duyệt (Tương lai ngày mai)
+INSERT INTO BookingRequest (RequesterID, SpaceCode, StartTime, EndTime, Purpose, ExpectedParticipants, Status)
+VALUES (8, 'WRK-02', 
+        DATEADD(hour, 14, CAST(DATEADD(day, 1, GETDATE()) AS DATETIME2)), 
+        DATEADD(hour, 17, CAST(DATEADD(day, 1, GETDATE()) AS DATETIME2)), 
+        'StudentActivity', 5, 'Pending');
+SET @B3 = SCOPE_IDENTITY();
+
+-- (4) Đơn số 4: Đã duyệt, chờ Check-In (Tương lai gần trong ngày)
+INSERT INTO BookingRequest (RequesterID, SpaceCode, StartTime, EndTime, Purpose, ExpectedParticipants, Status)
+VALUES (6, 'CS-301', 
+        DATEADD(hour, 3, GETDATE()), 
+        DATEADD(hour, 5, GETDATE()), 
+        'Meeting', 8, 'Approved');
+SET @B4 = SCOPE_IDENTITY();
+
+-- (5) Đơn số 5: Hoàn thành một hội thảo lớn (Quá khứ 3 ngày trước)
+INSERT INTO BookingRequest (RequesterID, SpaceCode, StartTime, EndTime, Purpose, ExpectedParticipants, Status)
+VALUES (4, 'AUDI-A', 
+        DATEADD(hour, 10, CAST(DATEADD(day, -3, GETDATE()) AS DATETIME2)), 
+        DATEADD(hour, 13, CAST(DATEADD(day, -3, GETDATE()) AS DATETIME2)), 
+        'Seminar', 150, 'Completed');
+SET @B5 = SCOPE_IDENTITY();
+
+-- (6) Đơn số 6: Bị từ chối do vượt quá Capacity (Quá khứ)
+INSERT INTO BookingRequest (RequesterID, SpaceCode, StartTime, EndTime, Purpose, ExpectedParticipants, Status)
+VALUES (9, 'CS-101', 
+        DATEADD(hour, 9, CAST(DATEADD(day, -2, GETDATE()) AS DATETIME2)), 
+        DATEADD(hour, 11, CAST(DATEADD(day, -2, GETDATE()) AS DATETIME2)), 
+        'StudentActivity', 50, 'Rejected');
+SET @B6 = SCOPE_IDENTITY();
+
+-- (7) Đơn số 7: Được duyệt nhưng sau đó bị hủy (Cancelled)
+INSERT INTO BookingRequest (RequesterID, SpaceCode, StartTime, EndTime, Purpose, ExpectedParticipants, Status)
+VALUES (7, 'CS-301', 
+        DATEADD(hour, 10, CAST(DATEADD(day, -4, GETDATE()) AS DATETIME2)), 
+        DATEADD(hour, 12, CAST(DATEADD(day, -4, GETDATE()) AS DATETIME2)), 
+        'AdministrativeEvent', 5, 'Cancelled');
+SET @B7 = SCOPE_IDENTITY();
+
+-- (8) Đơn số 8: Bị đánh dấu vắng mặt (NoShow)
+INSERT INTO BookingRequest (RequesterID, SpaceCode, StartTime, EndTime, Purpose, ExpectedParticipants, Status)
+VALUES (8, 'CS-101', 
+        DATEADD(hour, -6, GETDATE()), 
+        DATEADD(hour, -4, GETDATE()), 
+        'StudentActivity', 10, 'NoShow');
+SET @B8 = SCOPE_IDENTITY();
 GO
 ```
 
 ---
 
-## 6. Approvals
+## 6. Approvals (Sử dụng tham chiếu biến động)
 
 ```sql
+-- Giả định chạy lệnh tiếp nối khối trên, sử dụng các biến @B1..@B8 đã bắt phát sinh
 INSERT INTO Approval (BookingID, ApproverID, DecisionTime, DecisionNote, RejectionReason)
 VALUES
-(1, 2, '2026-06-01 10:00', 'Approved for student lab session.',                                              NULL),
-(2, 1, '2026-06-01 09:00', 'Approved for lecture.',                                                         NULL),
-(4, 2, '2026-06-03 11:00', 'Approved for TA meeting.',                                                      NULL),
-(5, 1, '2026-06-03 14:00', 'Approved for seminar. Remind requester to arrive 15 min early.',                 NULL),
-(6, 2, '2026-06-05 15:00', 'Rejected due to capacity constraints.',                                          'Capacity exceeds room limit (max 40, requested 50).'),
-(7, 2, '2026-06-06 09:00', 'Approved for administrative meeting.',                                           NULL),
-(8, 2, '2026-06-07 10:00', 'Approved — student activity.',                                                  NULL);
+(@B1, 2, DATEADD(hour, -1, DATEADD(day, -5, GETDATE())), 'Approved for student lab session.', NULL),
+(@B2, 1, DATEADD(hour, -2, DATEADD(day, 0, GETDATE())),  'Approved for lecture.', NULL),
+(@B4, 2, DATEADD(hour, -1, GETDATE()),                  'Approved for TA meeting.', NULL),
+(@B5, 1, DATEADD(hour, -5, DATEADD(day, -3, GETDATE())), 'Approved for seminar. Remind requester to arrive early.', NULL),
+(@B6, 2, DATEADD(hour, -6, DATEADD(day, -2, GETDATE())), 'Rejected due to capacity constraints.', 'Capacity exceeds room limit (max 40, requested 50).'),
+(@B7, 2, DATEADD(hour, -12, DATEADD(day, -4, GETDATE())), 'Approved for administrative meeting.', NULL),
+(@B8, 2, DATEADD(hour, -7, GETDATE()),                  'Approved — student activity.', NULL);
 GO
 ```
 
@@ -143,15 +199,26 @@ GO
 ```sql
 INSERT INTO UsageSession (BookingID, ActualStartTime, CheckInStaffID, InitialCondition, ActualEndTime, FinalCondition, UsageNotes)
 VALUES
--- Booking 1: completed session
-(1, '2026-06-02 09:05', 2, 'All computers functional, room clean.',
-    '2026-06-02 11:10', 'All OK. One keyboard missing a keycap.',            'Session completed on time. Students were working on database project.'),
--- Booking 2: checked in, not yet completed
-(2, '2026-06-02 07:55', 2, 'Room tidy. Projector and whiteboard ready.',
-    NULL,                NULL,                                                NULL),
--- Booking 5: completed session
-(5, '2026-06-05 09:55', 7, 'Auditorium clean. All microphones working. Livestream equipment set up.',
-    '2026-06-05 12:05', 'Auditorium in good condition. No issues reported.', 'Seminar on AI ethics ran smoothly. 150 attendees.');
+-- Booking 1: Đã hoàn tất hoàn toàn sạch sẽ
+(@B1, 
+ DATEADD(minute, 5, DATEADD(hour, 9, CAST(DATEADD(day, -5, GETDATE()) AS DATETIME2))), 
+ 2, 'All computers functional, room clean.',
+ DATEADD(minute, 10, DATEADD(hour, 11, CAST(DATEADD(day, -5, GETDATE()) AS DATETIME2))), 
+ 'All OK. One keyboard missing a keycap.', 
+ 'Session completed on time. Students were working on database project.'),
+
+-- Booking 2: Phiên làm việc đang active tại thời điểm hiện tại (ActualEndTime là NULL)
+(@B2, 
+ DATEADD(minute, -5, DATEADD(hour, -1, GETDATE())), 
+ 2, 'Room tidy. Projector and whiteboard ready.',
+ NULL, NULL, NULL),
+
+-- Booking 5: Hội thảo lớn đã hoàn tất thành công trong quá khứ
+(@B5, 
+ DATEADD(minute, -5, DATEADD(hour, 10, CAST(DATEADD(day, -3, GETDATE()) AS DATETIME2))), 
+ 7, 'Auditorium clean. All microphones working. Livestream equipment set up.',
+ DATEADD(minute, 5, DATEADD(hour, 13, CAST(DATEADD(day, -3, GETDATE()) AS DATETIME2))), 
+ 'Auditorium in good condition. No issues reported.', 'Seminar on AI ethics ran smoothly. 150 attendees.');
 GO
 ```
 
@@ -162,18 +229,18 @@ GO
 ```sql
 INSERT INTO MaintenanceRecord (SpaceCode, ReporterID, AssignedStaffID, ProblemDescription, StartTime, CompletionTime, Status, ResultNote)
 VALUES
--- Resolved: AC fixed
-('WRK-01', 8,  2, 'Air conditioner not cooling. Room temperature reaching 32°C.',
-    '2026-05-28 09:00', '2026-05-30 16:00', 'Resolved',  'Replaced coolant. AC working normally.'),
--- In progress: network issue
-('WRK-01', 6,  7, 'Network port by window not providing connectivity.',
-    '2026-06-01 10:00', NULL,               'InProgress', 'Waiting for network infrastructure team.'),
--- Open: projector issue
-('AUDI-A', 4,  2, 'Projector displaying dim, yellowish image. Bulb may need replacement.',
-    '2026-06-06 14:00', NULL,               'Open',       NULL),
--- Open, no staff assigned: keyboard issues
-('CS-201', 8,  NULL, 'Several keyboards in Row C have sticky or unresponsive keys.',
-    '2026-06-03 11:00', NULL,               'Open',       NULL);
+-- Resolved: Đã xử lý xong xuôi điều hòa cho WRK-01
+('WRK-01', 8, 2, 'Air conditioner not cooling. Room temperature reaching 32°C.',
+    DATEADD(day, -10, GETDATE()), DATEADD(day, -8, GETDATE()), 'Resolved', 'Replaced coolant. AC working normally.'),
+-- In progress: Lỗi mạng tại WRK-01 chưa giải quyết dứt điểm
+('WRK-01', 6, 7, 'Network port by window not providing connectivity.',
+    DATEADD(day, -2, GETDATE()), NULL, 'InProgress', 'Waiting for network infrastructure team.'),
+-- Open: Lỗi bóng đèn máy chiếu giảng đường chưa bàn giao staff
+('AUDI-A', 4, 2, 'Projector displaying dim, yellowish image. Bulb may need replacement.',
+    DATEADD(day, -1, GETDATE()), NULL, 'Open', NULL),
+-- Open, unassigned: Hỏng phím cơ hàng ghế C tại CS-201
+('CS-201', 8, NULL, 'Several keyboards in Row C have sticky or unresponsive keys.',
+    DATEADD(hour, -12, GETDATE()), NULL, 'Open', NULL);
 GO
 ```
 
@@ -197,6 +264,4 @@ GO
 | **Open maintenance (unassigned)** | CS-201 keyboard issue | MaintenanceRecord |
 | **Multiple facility types per space** | AUDI-A has 4 facilities | SpaceFacility |
 | **User disabled (not shown but schema supports)** | AccountStatus = 'Disabled' | User |
-| **Overlap scenario (data only)** | Bookings 1 and 9 (conceptual) | BookingRequest |
-
-**Note:** The overlap prevention rule (BR2) and the rule blocking bookings for spaces under maintenance (BR3, BR4) must be enforced by application logic. The sample data above only demonstrates the data structures; it does not attempt to violate these rules, but the database DDL alone cannot prevent overlapping time ranges.
+| **Overlap scenario (data only)** | Bookings 1 and 2 | BookingRequest |
