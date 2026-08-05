@@ -50,8 +50,8 @@
     - Computer
     - Livestreaming equipment
     - Air conditioner
-- Facilities are modeled as types (e.g., "Projector"), not individual physical units. 
-  A space-facility assignment is uniquely identified by (SpaceCode, FacilityName). No surrogate FacilityID is needed.
+- Facility is modeled as individual physical units, not types. Each unit has its own FacilityID surrogate key, a FacilityName indicating type, 
+  and belongs to exactly one Space (1:N). This allows individual units to be referenced in maintenance records.
 
 **1.4. Booking Request Management**
 - Users can submit booking requests containing:
@@ -78,6 +78,9 @@
 **1.6. Usage Session (Check-in & Check-out)**
 - **Check-in (Arrival):** Records actual start time, staff who checked in, and initial condition of the space.
 - **Completion (End):** Records actual end time, final condition of the space, and usage notes.
+- UsageSession must link to both BookingRequest (via BookingID as PK and FK, 
+  preserving the 1:1 relationship) and to Approval (via ApprovalID as an additional FK). This ensures a UsageSession can only exist if a valid 
+  Approval exists for the booking, while still maintaining direct traceability to the original booking request.
 
 **1.7. Maintenance Management**
 - System tracks maintenance records for issues like broken equipment, damaged furniture, or network problems.

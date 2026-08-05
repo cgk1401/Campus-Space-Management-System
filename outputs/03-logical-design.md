@@ -1,170 +1,210 @@
-# 03 — Logical Design (Relational Schema)
+# 03 — Logical Database Design (Relational Schema)
+
+Converted from the conceptual ERD in `outputs/02-erd-design.md` (Step 2). The ERD has no M:N relationships, so the mapping is direct: each entity becomes a relation; each named relationship becomes a FK column (plain 1:N) or a dedicated 1:1 table that carries relationship attributes.
+
+Target DBMS: **Microsoft SQL Server** (per AGENTS.md).
 
 ---
 
-## 1. Table: `User`
+## 1. Relation Mapping (ERD → Schema)
 
-| Column | Type | Constraints |
-|--------|------|-------------|
-| UserID | `INT` | **PK**, IDENTITY(1,1) |
-| FullName | `NVARCHAR(100)` | **NOT NULL** |
-| Email | `NVARCHAR(255)` | **NOT NULL**, **UNIQUE** |
-| PhoneNumber | `NVARCHAR(20)` | **NOT NULL** |
-| Role | `NVARCHAR(30)` | **NOT NULL**, CHECK (Role IN ('Student','Lecturer','TeachingAssistant','FacilityStaff','DepartmentAdministrator','FacilityManager')) |
-| Department | `NVARCHAR(100)` | **NOT NULL** |
-| AccountStatus | `NVARCHAR(20)` | **NOT NULL**, DEFAULT **'Active'**, CHECK (AccountStatus IN ('Active','Disabled')) |
-
-**Candidate keys:** `UserID` (PK), `Email` (UNIQUE)
+| ERD Entity / Relationship | Relational Mapping |
+|---------------------------|--------------------|
+| User | Relation `User` |
+| Space | Relation `Space` |
+| Facility | Relation `Facility` (FK to Space for "houses") |
+| BookingRequest | Relation `BookingRequest` (FKs for "submits", "targets") |
+| Approval | Relation `Approval` (1:1 with BookingRequest; carries decision attributes) |
+| UsageSession | Relation `UsageSession` (1:1 with BookingRequest; carries check-in/out attributes; FK to Approval) |
+| MaintenanceRecord | Relation `MaintenanceRecord` (FKs for reports, assigned-to, affects, concerns) |
 
 ---
 
-## 2. Table: `Space`
+## 2. Relations
 
-| Column | Type | Constraints |
-|--------|------|-------------|
-| SpaceCode | `NVARCHAR(20)` | **PK** |
-| SpaceName | `NVARCHAR(100)` | **NOT NULL** |
-| SpaceType | `NVARCHAR(30)` | **NOT NULL**, CHECK (SpaceType IN ('Auditorium','Classroom','ComputerLaboratory','ProjectLaboratory','MeetingRoom','StudentWorkspace')) |
-| Building | `NVARCHAR(100)` | **NOT NULL** |
-| Floor | `INT` | **NOT NULL** |
-| RoomNumber | `NVARCHAR(20)` | **NOT NULL** |
-| Capacity | `INT` | **NOT NULL**, CHECK (Capacity > 0) |
-| CurrentStatus | `NVARCHAR(20)` | **NOT NULL**, DEFAULT **'Available'**, CHECK (CurrentStatus IN ('Available','InUse','UnderMaintenance','TemporarilyClosed','Retired')) |
-| UsagePolicy | `NVARCHAR(MAX)` | NULL allowed |
+### 2.1. User
+| Attribute | Domain | Nullable | Constraints |
+|-----------|--------|----------|-------------|
+| UserID | INT | NO | **PK** |
+| FullName | NVARCHAR(100) | NO | |
+| Email | NVARCHAR(255) | NO | **Candidate key (UNIQUE)** |
+| PhoneNumber | NVARCHAR(20) | YES | |
+| Role | NVARCHAR(30) | NO | **CHECK** — Student, Lecturer, TeachingAssistant, FacilityStaff, DepartmentAdministrator, FacilityManager |
+| Department | NVARCHAR(100) | YES | |
+| AccountStatus | NVARCHAR(20) | NO | **DEFAULT** 'Active'; **CHECK** — Active, Disabled |
 
-**Candidate keys:** `SpaceCode` (PK), UNIQUE(`Building`, `Floor`, `RoomNumber`)
+**Candidate keys:** `Email` (UNIQUE).
+**Notes:** Users are never hard-deleted (history preservation, BR10) — disable via `AccountStatus` instead.
 
----
+### 2.2. Space
+| Attribute | Domain | Nullable | Constraints |
+|-----------|--------|----------|-------------|
+| SpaceCode | NVARCHAR(20) | NO | **PK** |
+| SpaceName | NVARCHAR(100) | NO | |
+| SpaceType | NVARCHAR(30) | NO | **CHECK** — Auditorium, Classroom, ComputerLaboratory, ProjectLaboratory, MeetingRoom, StudentWorkspace |
+| Building | NVARCHAR(100) | NO | |
+| Floor | INT | NO | |
+| RoomNumber | NVARCHAR(20) | NO | |
+| Capacity | INT | NO | **CHECK** — Capacity > 0 |
+| CurrentStatus | NVARCHAR(20) | NO | **DEFAULT** 'Available'; **CHECK** — Available, InUse, UnderMaintenance, TemporarilyClosed, Retired |
+| UsagePolicy | NVARCHAR(MAX) | YES | |
 
-## 3. Table: `FacilityType`
+**Candidate keys:** `(Building, Floor, RoomNumber)` (suggested, Assumption A9). `SpaceCode` is the declared PK (requirement states it is unique).
 
-| Column | Type | Constraints |
-|--------|------|-------------|
-| FacilityName | `NVARCHAR(50)` | **PK** |
+### 2.3. Facility
+| Attribute | Domain | Nullable | Constraints |
+|-----------|--------|----------|-------------|
+| FacilityID | INT | NO | **PK** (surrogate for the individual physical unit) |
+| FacilityName | NVARCHAR(50) | NO | **CHECK** — Projector, Whiteboard, Microphone, Computer, LivestreamingEquipment, AirConditioner |
+| SpaceCode | NVARCHAR(20) | NO | **FK → Space(SpaceCode)**, ON DELETE NO ACTION |
 
----
+**Candidate keys:** none (two units of the same type can exist in one space; `(SpaceCode, FacilityName)` is not unique).
 
-## 4. Table: `SpaceFacility`
+### 2.4. BookingRequest
+| Attribute | Domain | Nullable | Constraints |
+|-----------|--------|----------|-------------|
+| BookingID | INT | NO | **PK** |
+| RequesterID | INT | NO | **FK → User(UserID)**, ON DELETE NO ACTION |
+| SpaceCode | NVARCHAR(20) | NO | **FK → Space(SpaceCode)**, ON DELETE NO ACTION |
+| StartTime | DATETIME2 | NO | |
+| EndTime | DATETIME2 | NO | **CHECK** — EndTime > StartTime |
+| Purpose | NVARCHAR(30) | NO | **CHECK** — Lecture, Examination, Seminar, Workshop, Meeting, StudentActivity, AdministrativeEvent |
+| ExpectedParticipants | INT | NO | **CHECK** — ExpectedParticipants > 0 |
+| Status | NVARCHAR(20) | NO | **DEFAULT** 'Pending'; **CHECK** — Pending, Approved, Rejected, Cancelled, CheckedIn, Completed, NoShow |
 
-| Column | Type | Constraints |
-|--------|------|-------------|
-| SpaceCode | `NVARCHAR(20)` | **PK, FK** → Space(SpaceCode) |
-| FacilityName | `NVARCHAR(50)` | **PK, FK** → FacilityType(FacilityName) |
+**Candidate keys:** none beyond `BookingID`.
 
-**Candidate keys:** (`SpaceCode`, `FacilityName`) — composite PK
+### 2.5. Approval
+| Attribute | Domain | Nullable | Constraints |
+|-----------|--------|----------|-------------|
+| BookingID | INT | NO | **PK**, **FK → BookingRequest(BookingID)**, ON DELETE NO ACTION (1:1 — parent PK reused as child PK) |
+| ApproverID | INT | NO | **FK → User(UserID)**, ON DELETE NO ACTION |
+| DecisionTime | DATETIME2 | NO | |
+| DecisionNote | NVARCHAR(MAX) | NO | |
+| RejectionReason | NVARCHAR(MAX) | YES | Required when the booking was rejected — enforced at application level (see BR5) |
 
----
+**Candidate keys:** `BookingID` (PK).
 
-## 5. Table: `BookingRequest`
+### 2.6. UsageSession
+| Attribute | Domain | Nullable | Constraints |
+|-----------|--------|----------|-------------|
+| BookingID | INT | NO | **PK**, **FK → BookingRequest(BookingID)**, ON DELETE NO ACTION (1:1) |
+| ApprovalID | INT | NO | **FK → Approval(BookingID)**, ON DELETE NO ACTION (BR8: session only after valid approval) |
+| ActualStartTime | DATETIME2 | NO | |
+| CheckInStaffID | INT | NO | **FK → User(UserID)**, ON DELETE NO ACTION |
+| InitialCondition | NVARCHAR(MAX) | NO | |
+| ActualEndTime | DATETIME2 | YES | **CHECK** — ActualEndTime > ActualStartTime (when not NULL) |
+| FinalCondition | NVARCHAR(MAX) | YES | |
+| UsageNotes | NVARCHAR(MAX) | YES | |
 
-| Column | Type | Constraints |
-|--------|------|-------------|
-| BookingID | `INT` | **PK**, IDENTITY(1,1) |
-| RequesterID | `INT` | **NOT NULL**, **FK** → User(UserID) |
-| SpaceCode | `NVARCHAR(20)` | **NOT NULL**, **FK** → Space(SpaceCode) |
-| StartTime | `DATETIME2` | **NOT NULL** |
-| EndTime | `DATETIME2` | **NOT NULL**, CHECK (EndTime > StartTime) |
-| Purpose | `NVARCHAR(30)` | **NOT NULL**, CHECK (Purpose IN ('Lecture','Examination','Seminar','Workshop','Meeting','StudentActivity','AdministrativeEvent')) |
-| ExpectedParticipants | `INT` | **NOT NULL**, CHECK (ExpectedParticipants > 0) |
-| Status | `NVARCHAR(20)` | **NOT NULL**, DEFAULT **'Pending'**, CHECK (Status IN ('Pending','Approved','Rejected','Cancelled','CheckedIn','Completed','NoShow')) |
+**Candidate keys:** `BookingID` (PK).
 
-**Candidate keys:** `BookingID` (PK)
+### 2.7. MaintenanceRecord
+| Attribute | Domain | Nullable | Constraints |
+|-----------|--------|----------|-------------|
+| MaintenanceID | INT | NO | **PK** |
+| SpaceCode | NVARCHAR(20) | NO | **FK → Space(SpaceCode)**, ON DELETE NO ACTION |
+| FacilityID | INT | YES | **FK → Facility(FacilityID)**, ON DELETE NO ACTION (Assumption A5 / Q1) |
+| ReporterID | INT | NO | **FK → User(UserID)**, ON DELETE NO ACTION |
+| AssignedStaffID | INT | YES | **FK → User(UserID)**, ON DELETE NO ACTION |
+| ProblemDescription | NVARCHAR(MAX) | NO | |
+| StartTime | DATETIME2 | NO | |
+| CompletionTime | DATETIME2 | YES | **CHECK** — CompletionTime > StartTime (when not NULL) |
+| Status | NVARCHAR(20) | NO | **DEFAULT** 'Open'; **CHECK** — Open, InProgress, Resolved, Closed |
+| ResultNote | NVARCHAR(MAX) | YES | |
 
----
-
-## 6. Table: `Approval`
-
-| Column | Type | Constraints |
-|--------|------|-------------|
-| BookingID | `INT` | **PK, FK** → BookingRequest(BookingID) |
-| ApproverID | `INT` | **NOT NULL**, **FK** → User(UserID) |
-| DecisionTime | `DATETIME2` | **NOT NULL** |
-| DecisionNote | `NVARCHAR(MAX)` | NULL allowed |
-| RejectionReason | `NVARCHAR(MAX)` | NULL allowed |
-
-**Candidate keys:** `BookingID` (PK)
-
----
-
-## 7. Table: `UsageSession`
-
-| Column | Type | Constraints |
-|--------|------|-------------|
-| BookingID | `INT` | **PK, FK** → BookingRequest(BookingID) |
-| ActualStartTime | `DATETIME2` | **NOT NULL** |
-| CheckInStaffID | `INT` | **NOT NULL**, **FK** → User(UserID) |
-| InitialCondition | `NVARCHAR(MAX)` | NULL allowed |
-| ActualEndTime | `DATETIME2` | NULL allowed (set at check-out) |
-| FinalCondition | `NVARCHAR(MAX)` | NULL allowed |
-| UsageNotes | `NVARCHAR(MAX)` | NULL allowed |
-
-**Candidate keys:** `BookingID` (PK)
-
----
-
-## 8. Table: `MaintenanceRecord`
-
-| Column | Type | Constraints |
-|--------|------|-------------|
-| MaintenanceID | `INT` | **PK**, IDENTITY(1,1) |
-| SpaceCode | `NVARCHAR(20)` | **NOT NULL**, **FK** → Space(SpaceCode) |
-| ReporterID | `INT` | **NOT NULL**, **FK** → User(UserID) |
-| AssignedStaffID | `INT` | NULL allowed, **FK** → User(UserID) |
-| ProblemDescription | `NVARCHAR(MAX)` | **NOT NULL** |
-| StartTime | `DATETIME2` | **NOT NULL** |
-| CompletionTime | `DATETIME2` | NULL allowed |
-| Status | `NVARCHAR(20)` | **NOT NULL**, DEFAULT **'Open'**, CHECK (Status IN ('Open','InProgress','Resolved','Closed')) |
-| ResultNote | `NVARCHAR(MAX)` | NULL allowed |
-
-**Candidate keys:** `MaintenanceID` (PK)
+**Candidate keys:** `MaintenanceID` (PK).
 
 ---
 
-## 9. Foreign Key Summary
+## 3. Foreign Key ON DELETE Actions
 
-| FK Column(s) | Parent Table | ON DELETE | Justification |
-|-------------|-------------|-----------|---------------|
-| BookingRequest.RequesterID | User | **NO ACTION** | Historical preservation (BR10). Disabling a user (soft-delete via AccountStatus) should not destroy their booking history. |
-| BookingRequest.SpaceCode | Space | **NO ACTION** | Historical preservation. Spaces are soft-deleted via CurrentStatus = 'Retired'. Past bookings for retired spaces must remain. |
-| Approval.BookingID | BookingRequest | **CASCADE** | Approval has no independent meaning without its parent booking. If a booking is removed, its approval record is meaningless. |
-| Approval.ApproverID | User | **NO ACTION** | Historical preservation. The approver's identity must be preserved even if the user is later disabled. |
-| UsageSession.BookingID | BookingRequest | **CASCADE** | UsageSession has no independent meaning without its parent booking. |
-| UsageSession.CheckInStaffID | User | **NO ACTION** | Historical preservation. The check-in staff identity must be preserved. |
-| SpaceFacility.SpaceCode | Space | **CASCADE** | A space's facility list is a current configuration detail. If a space is retired/removed, its facility assignments are no longer relevant. |
-| SpaceFacility.FacilityName | FacilityType | **NO ACTION** | Deleting a facility type should not be allowed while any space references it (referential integrity). |
-| MaintenanceRecord.SpaceCode | Space | **NO ACTION** | Historical preservation. Maintenance records for a space must persist even if the space is retired. |
-| MaintenanceRecord.ReporterID | User | **NO ACTION** | Historical preservation. |
-| MaintenanceRecord.AssignedStaffID | User | **SET NULL** | Optional FK. If a staff member leaves, the maintenance record can remain without an assignee. |
+| FK | Action | Justification |
+|----|--------|---------------|
+| BookingRequest.RequesterID → User | **NO ACTION** | Booking history must be preserved (BR10); users are disabled, not deleted. Deleting a user must not cascade-delete bookings. |
+| BookingRequest.SpaceCode → Space | **NO ACTION** | Booking history must be preserved; spaces are retired via `CurrentStatus`, not hard-deleted. |
+| Facility.SpaceCode → Space | **NO ACTION** | Maintenance records reference facilities; removing a space must not silently delete its facility units. |
+| Approval.BookingID → BookingRequest | **NO ACTION** | A booking and its approval decision are historical records; they must be preserved together, but removing one must never cascade the other unexpectedly. |
+| Approval.ApproverID → User | **NO ACTION** | Approval history must be preserved even if a user's account is disabled. |
+| UsageSession.BookingID → BookingRequest | **NO ACTION** | Session history must be preserved (BR10). |
+| UsageSession.ApprovalID → Approval | **NO ACTION** | A session proves a validated booking; the approval record must remain for auditability. |
+| UsageSession.CheckInStaffID → User | **NO ACTION** | Session history must be preserved. |
+| MaintenanceRecord.SpaceCode → Space | **NO ACTION** | Maintenance history must be preserved. |
+| MaintenanceRecord.FacilityID → Facility | **NO ACTION** | Per-unit maintenance history must be preserved. |
+| MaintenanceRecord.ReporterID → User | **NO ACTION** | Historical reporting records must be preserved. |
+| MaintenanceRecord.AssignedStaffID → User | **NO ACTION** | Historical assignment records must be preserved. |
+
+**Overall policy:** no hard-deletes anywhere in the schema — parents are soft-deactivated (space status, account status), so every FK uses NO ACTION to protect historical integrity (BR10).
 
 ---
 
-## 10. DDL-Enforceable Constraints vs. Application-Level Rules
+## 4. Candidate Keys Summary
 
-### DDL-Enforceable (CHECK, UNIQUE, NOT NULL)
+| Relation | Candidate Key(s) | Role |
+|----------|------------------|------|
+| User | Email | UNIQUE |
+| Space | SpaceCode (declared PK); (Building, Floor, RoomNumber) — suggested, Assumption A9 | UNIQUE |
+| Facility | FacilityID | PK |
+| BookingRequest | BookingID | PK |
+| Approval | BookingID | PK |
+| UsageSession | BookingID | PK |
+| MaintenanceRecord | MaintenanceID | PK |
 
-| Constraint | Location | SQL Enforcement |
-|-----------|----------|---------------|
-| Capacity > 0 | Space | CHECK (Capacity > 0) |
-| EndTime > StartTime | BookingRequest | CHECK (EndTime > StartTime) |
-| ExpectedParticipants > 0 | BookingRequest | CHECK (ExpectedParticipants > 0) |
-| Role must be a valid value | User | CHECK (Role IN (...)) |
-| AccountStatus must be valid | User | CHECK (AccountStatus IN (...)) |
-| SpaceType must be valid | Space | CHECK (SpaceType IN (...)) |
-| CurrentStatus must be valid | Space | CHECK (CurrentStatus IN (...)) |
-| Purpose must be valid | BookingRequest | CHECK (Purpose IN (...)) |
-| Booking Status must be valid | BookingRequest | CHECK (Status IN (...)) |
-| Maintenance Status must be valid | MaintenanceRecord | CHECK (Status IN (...)) |
-| Email uniqueness | User | UNIQUE (Email) |
-| Room uniqueness | Space | UNIQUE (Building, Floor, RoomNumber) |
+---
 
-### Application-Level Rules
+## 5. Domain & CHECK Constraints Summary
 
-| Rule | Description |
-|------|-------------|
-| No overlapping bookings | The system must prevent two Approved/CheckedIn bookings for the same space with overlapping time intervals. Requires checking (StartTime, EndTime) ranges programmatically. |
-| Blocked spaces cannot be booked | If Space.CurrentStatus is 'UnderMaintenance', 'TemporarilyClosed', or 'Retired', the system must reject new booking requests for that space. |
-| Active maintenance blocks bookings | If a space has any MaintenanceRecord with Status != 'Resolved' or 'Closed', the system should warn or block booking. |
-| Rejection reason is required when rejected | Application logic: if Approval.Status implies rejection (based on BookingRequest.Status), the RejectionReason should be non-null. |
-| Role-based access control | Only FacilityStaff/FacilityManager may be set as ApproverID or CheckInStaffID. Only FacilityStaff/FacilityManager may be set as AssignedStaffID. This is enforced by application logic, not FK constraints. |
-| Status transitions | BookingRequest.Status follows a lifecycle: Pending → Approved/Rejected/Cancelled → CheckedIn → Completed/NoShow. Invalid transitions must be rejected by the application. |
-| Preserve history | DELETE operations on User or Space should be disallowed or replaced with status changes to 'Disabled'/'Retired'. |
+| Constraint | Applies to | Valid values / condition |
+|------------|-----------|--------------------------|
+| User.Role | User | Student, Lecturer, TeachingAssistant, FacilityStaff, DepartmentAdministrator, FacilityManager |
+| User.AccountStatus | User | Active, Disabled |
+| Space.SpaceType | Space | Auditorium, Classroom, ComputerLaboratory, ProjectLaboratory, MeetingRoom, StudentWorkspace |
+| Space.CurrentStatus | Space | Available, InUse, UnderMaintenance, TemporarilyClosed, Retired |
+| Space.Capacity > 0 | Space | Capacity ≥ 1 |
+| Facility.FacilityName | Facility | Projector, Whiteboard, Microphone, Computer, LivestreamingEquipment, AirConditioner |
+| BookingRequest.Purpose | BookingRequest | Lecture, Examination, Seminar, Workshop, Meeting, StudentActivity, AdministrativeEvent |
+| BookingRequest.Status | BookingRequest | Pending, Approved, Rejected, Cancelled, CheckedIn, Completed, NoShow |
+| BookingRequest.EndTime > StartTime | BookingRequest | EndTime after StartTime |
+| BookingRequest.ExpectedParticipants > 0 | BookingRequest | ≥ 1 |
+| UsageSession.ActualEndTime > ActualStartTime | UsageSession | enforced when ActualEndTime is not NULL |
+| MaintenanceRecord.CompletionTime > StartTime | MaintenanceRecord | enforced when CompletionTime is not NULL |
+| MaintenanceRecord.Status | MaintenanceRecord | Open, InProgress, Resolved, Closed |
+
+**DEFAULT values:** User.AccountStatus = 'Active'; Space.CurrentStatus = 'Available'; BookingRequest.Status = 'Pending'; MaintenanceRecord.Status = 'Open'.
+
+---
+
+## 6. Business Rule Enforcement (DDL vs Application Logic)
+
+| # | Rule | Enforceable via DDL? | Enforcement |
+|---|------|----------------------|-------------|
+| BR1 | Users must have a university account to book | Partial | FK `BookingRequest.RequesterID` (reference integrity); role of requester checked at application level |
+| BR2 | No overlapping approved bookings for the same space | **No** | Application-level query over (SpaceCode, StartTime, EndTime, Status) at booking/approval time |
+| BR3 | Under-maintenance / closed / retired spaces cannot be booked | **No** | Application-level check of `Space.CurrentStatus` before booking |
+| BR4 | Space with active unresolved maintenance cannot be booked | **No** | Application-level check against active `MaintenanceRecord` rows |
+| BR5 | Approval must record approver, decision time, note; rejection reason required on rejection | Partial | NOT NULL on ApproverID/DecisionTime/DecisionNote (DDL); "reason required only if rejected" is application-level (depends on booking Status) |
+| BR6 | Check-in records actual start time, staff, initial condition | Yes | NOT NULL on ActualStartTime, CheckInStaffID, InitialCondition |
+| BR7 | Check-out records actual end time, final condition, usage notes | Partial | Columns exist; mandatory on completion enforced at application level |
+| BR8 | UsageSession only after valid Approval | Yes | NOT NULL FK `UsageSession.ApprovalID` |
+| BR9 | Facilities are individual units in exactly one space | Yes | Surrogate PK `FacilityID` + NOT NULL FK `Facility.SpaceCode` |
+| BR10 | Preserve historical records, no hard deletes | Policy | All FKs NO ACTION; status flags instead of deletion |
+| BR11 | Purpose of use domain | Yes | CHECK on Purpose |
+| BR12 | Capacity > 0 | Yes | CHECK |
+| BR13 | EndTime > StartTime | Yes | CHECK |
+| BR14 | Booking status domain | Yes | CHECK on Status |
+| BR15 | Space status domain | Yes | CHECK on CurrentStatus |
+| BR16 | Only FacilityStaff/Manager approve, check in, or are assigned maintenance | **No** | Application-level role-based access (see ERD Section 4) |
+| BR17 | Overlap/status prevention enforced in application logic | **No** | Application-level (BR2/BR3/BR4) |
+
+**Application-level rules are NOT SQL constraints:** BR2, BR3, BR4, BR16, the "rejection reason required" part of BR5, and the "mandatory fields on completion" part of BR7. Everything else is enforceable directly in DDL.
+
+---
+
+## 7. Assumptions & Open Questions Carried Forward
+
+| # | Item | Status |
+|---|------|--------|
+| A5 / Q1 | `MaintenanceRecord.FacilityID` optional per-unit reference | Open — confirm with stakeholder |
+| A9 | `(Building, Floor, RoomNumber)` is unique per Space (candidate key) | New assumption — confirm; otherwise SpaceCode alone guarantees uniqueness |
+| A2 | `InUse` space status maintained manually or derived from sessions | Open (Q7) |
+| Q2–Q6, Q8, Q9 | Role-based space access, lead times, edit-after-submit, recurring bookings, duration limits, facility movability, rejected-booking records | Open — do not affect schema shape currently |
