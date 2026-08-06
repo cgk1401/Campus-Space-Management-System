@@ -22,13 +22,23 @@ Before assuming anything, inspect the project:
 
 Create or update the following files:
 
-1. `outputs/01-business-req-analysis.md`
-2. `outputs/02-erd-design.md`
-3. `outputs/03-logical-design.md`
-4. `outputs/04-design-validation.md`
-5. `outputs/05-db-definition.md`
-6. `outputs/06-sample-data.md`
-7. `outputs/07-query-design.md`
+1. `outputs/01-business-req-analysis-G10.md`
+2. `outputs/02-erd-design-G10.md`
+3. `outputs/03-logical-design-G10.md`
+4. `outputs/04-design-validation-G10.md`
+5. `outputs/05-db-definition-G10.md`
+6. `outputs/06-sample-data-G10.md`
+7. `outputs/07-query-design-G10.md`
+8. `outputs/08-requirement-change-analysis-G10.md`
+9. `outputs/09-updated-erd-and-logical-design-G10.md`
+10. `outputs/10-schema-migration-G10.sql`
+11. `outputs/11-concurrency-design-G10.md`
+12. `outputs/12-concurrency-implementation-G10.sql`
+13. `outputs/13-concurrency-tests-G10`
+14. `outputs/14-data-generator-G10`
+15. `outputs/15-index-tuning-report-G10.md`
+16. `outputs/16-analytical-queries-G10.sql`
+
 
 Do not skip any Markdown file.
 
@@ -37,7 +47,7 @@ Do not skip any Markdown file.
 # Step 1: Business Requirement Analysis
 
 Save to:
-`outputs/01-business-req-analysis.md`
+`outputs/01-business-req-analysis-G10.md`
 The document must include:
 Analyze the requirements to identify the business purpose, actors, entities, attributes, relationships, cardinalities, and business rules.
 
@@ -46,7 +56,7 @@ Analyze the requirements to identify the business purpose, actors, entities, att
 Design an ERD that should be based on the document from the prior step: Step 1: Business Requirement Analysis.
 
 Save to:
-`outputs/02-erd-design.md`
+`outputs/02-erd-design-G10.md`
 The document must include:
 An ERD showing the main entities, attributes, relationships, cardinalities, and participation constraints.
 
@@ -65,7 +75,7 @@ note these as role-based access constraints in the relationship details section.
 Convert the ERD from Step 2 (Conceptual Design) into a relational schema
 
 Save to:
-`outputs/03-logical-design.md`
+`outputs/03-logical-design-G10.md`
 The document must include:
 A relational schema with relations, attributes, primary keys, foreign keys, candidate keys, and key constraints.
 
@@ -93,7 +103,7 @@ Do not list DDL-enforceable constraints as application-level.
 The ERD and the schema be based on the document from the prior step: Step 2 and Step 3
 
 Save to:
-`outputs/04-design-validation.md`
+`outputs/04-design-validation-G10.md`
 The document must include:
 Evaluate whether the relational schema correctly represents the ERD, satisfies the business rules, and uses appropriate keys, relationships, and constraints.
 
@@ -104,7 +114,7 @@ Implement the database using SQL DDL with tables,
 keys, constraints, checks, and default values where appropriate.
 
 Save to:
-`outputs/05-db-definition.md`
+`outputs/05-db-definition-G10.md`
 The document must include:
 The database using SQL DDL with tables, keys, constraints, checks, and default values where appropriate.
 
@@ -112,7 +122,7 @@ The database using SQL DDL with tables, keys, constraints, checks, and default v
 # Step 6: Sample Data
 
 Save to:
-`outputs/06-sample-data.md`
+`outputs/06-sample-data-G10.md`
 The document must include:
 Insert realistic sample data to support testing of normal 
 operations and important exceptional cases.
@@ -121,8 +131,23 @@ operations and important exceptional cases.
 # Step 7:
 
 Save to:
-`outputs/07-query-design.md`
+`outputs/07-query-design-G10.md`
+
 The document must include:
 Design and execute at 20 meaningful SQL 
 queries that are valid for the database and useful for answering business questions 
 in the given context. Each query must include: Business question, target user(s) that would use the query, short explanation of why the query is useful, SQL statement.
+
+# Step 8: Requirement Change Analysis (Agent Skill)
+
+Save to: `outputs/08-requirement-change-analysis-G10.md`
+
+**Context & Role:**
+You are a Senior Database Architect. Your task is to analyze the Phase 2 requirement changes (Maintenance Impact Levels and Concurrent Booking/Approval) against the Phase 1 conceptual design. 
+
+**Analytical Directives (How you must think):**
+When analyzing the requirements, you MUST apply advanced database design principles. Do not blindly propose schema changes if physical implementation solves the problem better. Follow these specific logic rules:
+1. **Maintenance Impact Levels:** Recognize that `Advisory` vs. `Out-of-service` requires a new attribute (`ImpactLevel`). For recording user acknowledgement of advisories, deduce that a new associative entity (e.g., `BOOKING_ACKNOWLEDGEMENT`) is required to track exactly which maintenance record was acknowledged by which booking.
+2. **Escalation Logic:** Understand that escalating an impact level does *not* require schema changes. It requires an "Impact Analysis Query" (JOIN logic based on overlapping time ranges) to identify affected bookings.
+3. **Auto-approval:** DO NOT propose removing the `ApproverID` foreign key constraint or adding an `IsAutoApproved` column. Instead, propose using a "Non-human System Actor" (e.g., a System User ID) to maintain referential integrity and auditability.
+4. **Concurrency Control:** Explicitly state that application-level (Backend) time-checks are insufficient due to "Race Conditions". Recommend Database-level enforcement (e.g., Transaction Locking, Serializable Isolation, or PostgreSQL Exclusion Constraints) as the single source of truth.

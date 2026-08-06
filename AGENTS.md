@@ -22,13 +22,22 @@ Do not jump directly to DDL. The documents from the prior steps should be follow
 
 ## Required Outputs
 
-- `outputs/01-business-req-analysis.md`
-- `outputs/02-erd-design.md`
-- `outputs/03-logical-design.md`
-- `outputs/04-design-validation.md`
-- `outputs/05-db-definition.md`
-- `outputs/06-sample-data.md`
-- `outputs/07-query-design.md`
+- `outputs/01-business-req-analysi-G10.md`
+- `outputs/02-erd-design-G10.md`
+- `outputs/03-logical-design-G10.md`
+- `outputs/04-design-validation-G10.md`
+- `outputs/05-db-definition-G10.md`
+- `outputs/06-sample-data-G10.md`
+- `outputs/07-query-design-G10.md`
+- `outputs/08-requirement-change-analysis-G10.md`
+- `outputs/09-updated-erd-and-logical-design-G10.md`
+- `outputs/10-schema-migration-G10.sql`
+- `outputs/11-concurrency-design-G10.md`
+- `outputs/12-concurrency-implementation-G10.sql`
+- `outputs/13-concurrency-tests-G10`
+- `outputs/14-data-generator-G10`
+- `outputs/15-index-tuning-report-G10.md`
+- `outputs/16-analytical-queries-G10.sql`
 
 ## DBMS
 
