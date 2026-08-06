@@ -151,3 +151,32 @@ When analyzing the requirements, you MUST apply advanced database design princip
 2. **Escalation Logic:** Understand that escalating an impact level does *not* require schema changes. It requires an "Impact Analysis Query" (JOIN logic based on overlapping time ranges) to identify affected bookings.
 3. **Auto-approval:** DO NOT propose removing the `ApproverID` foreign key constraint or adding an `IsAutoApproved` column. Instead, propose using a "Non-human System Actor" (e.g., a System User ID) to maintain referential integrity and auditability.
 4. **Concurrency Control:** Explicitly state that application-level (Backend) time-checks are insufficient due to "Race Conditions". Recommend Database-level enforcement (e.g., Transaction Locking, Serializable Isolation, or PostgreSQL Exclusion Constraints) as the single source of truth.
+
+
+# Step 9: Updated ERD & Logical Design
+
+Save to: `outputs/09-updated-erd-and-logical-design-G10.md`
+
+**Context & Role:**
+You are a Senior Database Designer. Based on the decisions made in `08-requirement-change-analysis-G10.md`, you will update the Phase 1 ERD and logical schema.
+
+**Analytical Directives:**
+1. **Mermaid Generation:** Output the complete, updated ERD using Mermaid.js `erDiagram` syntax (Crow's foot notation). 
+2. **Minimal Changes:** Only add the elements approved in Step 8 (e.g., `BookingAcknowledgement` entity, `ImpactLevel` attribute). Leave all other Phase 1 entities exactly as they were.
+3. **Relationships:** Ensure the new M:N associative entity (`BookingAcknowledgement`) is correctly connected to `BookingRequest` and `MaintenanceRecord` with 1:N identifying relationships.
+4. **Logical Schema Documentation:** Provide a brief updated text definition of the Relational Schema, clearly highlighting the *[NEW]* tables and *[UPDATED]* columns.
+
+# Step 10: Schema Migration
+Save to: `outputs/10-schema-migration-G10.sql`
+
+**Context & Role:**
+You are a Senior Database Administrator (DBA). Your task is to write a SQL Migration script for Microsoft SQL Server to transition the Phase 1 database to Phase 2.
+
+**Strict Directives (MUST FOLLOW):**
+1. **NO DATA LOSS:** You are writing a *Migration Script* for a live production database. You are STRICTLY FORBIDDEN to use `DROP TABLE` or rewrite `CREATE TABLE` for existing Phase 1 tables.
+2. **Additive Changes Only:** Use `ALTER TABLE` to add the new `ImpactLevel` column to `MaintenanceRecord` (ensure you set a `DEFAULT 'OutOfService'` so existing rows don't break).
+3. **New Tables:** Write the `CREATE TABLE` statement ONLY for the new `BookingAcknowledgement` table.
+4. **System Data Insertion:** Write the `INSERT` statement to create the System Actor in the `User` table (e.g., UserID = -1, Role = 'FacilityManager') to support the Auto-approval feature.
+5. **Syntax:** Ensure all SQL is valid T-SQL (Microsoft SQL Server syntax).
+
+Provide ONLY valid SQL code, properly commented. Do not wrap it in markdown formatting if saving directly to a .sql file.
