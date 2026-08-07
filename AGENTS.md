@@ -22,7 +22,7 @@ Do not jump directly to DDL. The documents from the prior steps should be follow
 
 ## Required Outputs
 
-- `outputs/01-business-req-analysi-G10.md`
+- `outputs/01-business-req-analysis-G10.md`
 - `outputs/02-erd-design-G10.md`
 - `outputs/03-logical-design-G10.md`
 - `outputs/04-design-validation-G10.md`

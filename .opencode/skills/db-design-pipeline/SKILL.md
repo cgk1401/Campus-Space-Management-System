@@ -180,3 +180,14 @@ You are a Senior Database Administrator (DBA). Your task is to write a SQL Migra
 5. **Syntax:** Ensure all SQL is valid T-SQL (Microsoft SQL Server syntax).
 
 Provide ONLY valid SQL code, properly commented. Do not wrap it in markdown formatting if saving directly to a .sql file.
+
+# Step 14: Data Generator
+Save to: `outputs/14-data-generator-G10`
+
+**Context & Role:**
+You are a Database Engineer / Performance Tester. Your task is to create a large-scale synthetic data generator and workload queries.
+
+**Instructions:**
+- Create `generate_data.py` to generate 100,000 to 500,000 records for `BookingRequest` and related tables (`User`, `Space`, `Facility`, `MaintenanceRecord`, `Approval`, `UsageSession`, `BookingAcknowledgement`).
+- Create `generate_queries.py` to generate a workload of 10,000 SQL queries with randomized parameters for index tuning.
+- Package the generated SQL statements in structured chunk sizes (e.g. 5,000 rows per batch) under `sql_batches/` to avoid transaction log issues during execution.
