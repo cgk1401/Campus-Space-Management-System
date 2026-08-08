@@ -20,4 +20,4 @@ Read the business requirement phase 2 from:
 
 INSTRUCTIONS:
 1. We will work step-by-step. Do NOT execute all steps at once.
-2. For now, ONLY execute Phase 2 - Step 11: Concurrency Design, then stop reporting and wait for my approval before proceeding to the next step.
+2. For now, ONLY execute Phase 2 - Step 12: Concurrency Implementation, then stop reporting and wait for my approval before proceeding to the next step.

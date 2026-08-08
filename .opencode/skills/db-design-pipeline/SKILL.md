@@ -205,14 +205,29 @@ define 2 concurrency conflict scenarios and propose a solution for each.
 
 # Step 12: Concurrency Implementation
 
-Save to: `outputs/12-concurrency-implementation-G10/`
+Save to: `outputs/12-concurrency-implementation-G10.sql`
 
 **Context & Role:**
-You are a Senior Database Administrator (DBA).
+You are a Senior Database Administrator (DBA). Based on the scenarios and analysis in `11-concurrency-design-G10.md`, 
+implement the concurrency-prevention mechanism.
+
+**Implementation Directives:**
+1. **Core Procedures:** Implement a stored procedure (or transaction template) for the auto-approval path, 
+                        and a separate one for the manual-approval path.
+2. **Follow Analysis:** Both procedures must implement the concurrency control strategy designed in `11-concurrency-design-G10.md`, 
+                        without restating or hardcoding specific lock/isolation syntax choices here beyond what the design calls for 
+                        — if the design changes, this script should be updated to match, not treated as the source of truth.
+3. **Shared Overlap Logic:** Both procedures must use identical overlap-check logic (e.g. a shared scalar function or identical inline predicate) 
+                             so the two paths cannot drift apart.
+4. **Idempotent:** Use `CREATE OR ALTER PROCEDURE` so the script is safely re-runnable.
+5. **Transaction Safety:** Explicit `BEGIN TRAN` / `COMMIT` / `ROLLBACK` with `TRY/CATCH` error handling.
+6. **Naming Convention:** Follow existing project convention (e.g. `usp_<Action>_<Path>`). 
+7. **Scope Guard:** Do not include unmitigated ("before-fix") versions or any test/demo scripts — that is Step 13's responsibility.
+8. **Syntax:** Ensure all SQL is valid T-SQL (Microsoft SQL Server syntax).
 
 # Step 13: Concurrency Tests
 
-Save to: `outputs/13-concurrency-tests-G10.md`
+Save to: `outputs/13-concurrency-tests-G10/`
 
 **Context & Role:**
 You are a Senior Database Administrator (DBA).
