@@ -48,6 +48,12 @@ def ensure_dirs():
     if not os.path.exists(SQL_BATCH_DIR):
         os.makedirs(SQL_BATCH_DIR)
 
+def write_insert_batches(f, table_name, columns, values_list, batch_limit=1000):
+    for i in range(0, len(values_list), batch_limit):
+        chunk = values_list[i:i + batch_limit]
+        f.write(f"INSERT INTO {table_name} ({columns}) VALUES\n")
+        f.write(",\n".join(chunk) + ";\n")
+
 def generate_users(num_users=2000):
     users = []
     # System Auto-Approval Actor is pre-created in migration (-1)
@@ -151,28 +157,25 @@ def main():
         
         # Users
         f.write("SET IDENTITY_INSERT [User] ON;\n")
-        f.write("INSERT INTO [User] (UserID, FullName, Email, PhoneNumber, Role, Department, AccountStatus) VALUES\n")
         u_vals = [f"({u['UserID']}, N'{u['FullName']}', '{u['Email']}', '{u['PhoneNumber']}', '{u['Role']}', N'{u['Department']}', '{u['AccountStatus']}')" for u in users]
-        f.write(",\n".join(u_vals) + ";\n")
+        write_insert_batches(f, "[User]", "UserID, FullName, Email, PhoneNumber, Role, Department, AccountStatus", u_vals)
         f.write("SET IDENTITY_INSERT [User] OFF;\nGO\n\n")
         
         # Spaces
-        f.write("INSERT INTO [Space] (SpaceCode, SpaceName, SpaceType, Building, Floor, RoomNumber, Capacity, CurrentStatus, UsagePolicy) VALUES\n")
         s_vals = [f"('{s['SpaceCode']}', N'{s['SpaceName']}', '{s['SpaceType']}', '{s['Building']}', {s['Floor']}, '{s['RoomNumber']}', {s['Capacity']}, '{s['CurrentStatus']}', N'{s['UsagePolicy']}')" for s in spaces]
-        f.write(",\n".join(s_vals) + ";\nGO\n\n")
+        write_insert_batches(f, "[Space]", "SpaceCode, SpaceName, SpaceType, Building, Floor, RoomNumber, Capacity, CurrentStatus, UsagePolicy", s_vals)
+        f.write("GO\n\n")
 
         # Facilities
         f.write("SET IDENTITY_INSERT Facility ON;\n")
-        f.write("INSERT INTO Facility (FacilityID, FacilityName, SpaceCode) VALUES\n")
         fac_vals = [f"({fc['FacilityID']}, '{fc['FacilityName']}', '{fc['SpaceCode']}')" for fc in facilities]
-        f.write(",\n".join(fac_vals) + ";\n")
+        write_insert_batches(f, "Facility", "FacilityID, FacilityName, SpaceCode", fac_vals)
         f.write("SET IDENTITY_INSERT Facility OFF;\nGO\n\n")
 
         # Maintenance
         f.write("SET IDENTITY_INSERT MaintenanceRecord ON;\n")
-        f.write("INSERT INTO MaintenanceRecord (MaintenanceID, SpaceCode, FacilityID, ReporterID, AssignedStaffID, ProblemDescription, StartTime, CompletionTime, Status, ImpactLevel) VALUES\n")
         m_vals = [f"({m['MaintenanceID']}, '{m['SpaceCode']}', {m['FacilityID']}, {m['ReporterID']}, {m['AssignedStaffID']}, N'{m['ProblemDescription']}', '{m['StartTime']}', {m['CompletionTime']}, '{m['Status']}', '{m['ImpactLevel']}')" for m in maintenance]
-        f.write(",\n".join(m_vals) + ";\n")
+        write_insert_batches(f, "MaintenanceRecord", "MaintenanceID, SpaceCode, FacilityID, ReporterID, AssignedStaffID, ProblemDescription, StartTime, CompletionTime, Status, ImpactLevel", m_vals)
         f.write("SET IDENTITY_INSERT MaintenanceRecord OFF;\nGO\n\n")
 
     print("Master seed generated successfully.")
@@ -232,24 +235,23 @@ def main():
             
             # BookingRequest
             f.write("SET IDENTITY_INSERT BookingRequest ON;\n")
-            f.write("INSERT INTO BookingRequest (BookingID, RequesterID, SpaceCode, StartTime, EndTime, Purpose, ExpectedParticipants, Status) VALUES\n")
-            f.write(",\n".join(bookings) + ";\n")
+            write_insert_batches(f, "BookingRequest", "BookingID, RequesterID, SpaceCode, StartTime, EndTime, Purpose, ExpectedParticipants, Status", bookings)
             f.write("SET IDENTITY_INSERT BookingRequest OFF;\nGO\n\n")
 
             # Approval
             if approvals:
-                f.write("INSERT INTO Approval (BookingID, ApproverID, DecisionTime, DecisionNote, RejectionReason) VALUES\n")
-                f.write(",\n".join(approvals) + ";\nGO\n\n")
+                write_insert_batches(f, "Approval", "BookingID, ApproverID, DecisionTime, DecisionNote, RejectionReason", approvals)
+                f.write("GO\n\n")
 
             # UsageSession
             if sessions:
-                f.write("INSERT INTO UsageSession (BookingID, ApprovalID, ActualStartTime, CheckInStaffID, InitialCondition, ActualEndTime, FinalCondition, UsageNotes) VALUES\n")
-                f.write(",\n".join(sessions) + ";\nGO\n\n")
+                write_insert_batches(f, "UsageSession", "BookingID, ApprovalID, ActualStartTime, CheckInStaffID, InitialCondition, ActualEndTime, FinalCondition, UsageNotes", sessions)
+                f.write("GO\n\n")
 
             # BookingAcknowledgement
             if acknowledgements:
-                f.write("INSERT INTO BookingAcknowledgement (BookingID, MaintenanceID, AcknowledgedAt, AcknowledgedByUserID) VALUES\n")
-                f.write(",\n".join(acknowledgements) + ";\nGO\n\n")
+                write_insert_batches(f, "BookingAcknowledgement", "BookingID, MaintenanceID, AcknowledgedAt, AcknowledgedByUserID", acknowledgements)
+                f.write("GO\n\n")
 
         print(f"Batch {b_idx+1}/{total_batches} generated.")
 
