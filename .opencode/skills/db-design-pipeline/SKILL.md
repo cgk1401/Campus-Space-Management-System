@@ -230,4 +230,21 @@ implement the concurrency-prevention mechanism.
 Save to: `outputs/13-concurrency-tests-G10/`
 
 **Context & Role:**
-You are a Senior Database Administrator (DBA).
+You are a Senior Database Administrator (DBA). Based on the scenarios in
+`11-concurrency-design-G10.md`, create tests proving the solution implemented in
+`12-concurrency-implementation-G10.sql` is both necessary and effective.
+
+**Implementation Directives:**
+1. **Follow Scenario:** Reproduce Scenario A and Scenario B from Step 11 exactly (same actors, windows, transaction types).
+2. **Before/After Pairing:** For each scenario, provide BOTH an unmitigated demo (BR21 violated) and 
+                             a mitigated demo (BR21 holds, using the actual Step 12 procedures). 
+                             Do not modify `12-concurrency-implementation-G10.sql` to produce the unmitigated version — 
+                             use raw ad-hoc T-SQL that bypasses the anchor lock, isolated to this folder.
+3. **Real Interleaving:** Use two separate sessions (documented as two SSMS windows / sqlcmd connections, or scripted with WAITFOR DELAY 
+                          to force the interleave) — not sequential statements in one session.
+4. **Evidence:** Each demo must capture observable proof: blocking/waiting state (e.g. sys.dm_exec_requests / sys.dm_tran_locks) 
+                 for the mitigated case, and final table state for both, with an explicit pass/fail query 
+                 (e.g. COUNT of overlapping Approved bookings — expect 2 unmitigated, ≤1 mitigated).
+5. **Test Isolation:** Use a dedicated test Space/requester and clean up (DELETE or transaction ROLLBACK) after each test 
+                       so no test data persists into the Step 14 dataset.
+6. **Syntax:** Ensure all SQL is valid T-SQL (Microsoft SQL Server syntax).
