@@ -180,3 +180,39 @@ You are a Senior Database Administrator (DBA). Your task is to write a SQL Migra
 5. **Syntax:** Ensure all SQL is valid T-SQL (Microsoft SQL Server syntax).
 
 Provide ONLY valid SQL code, properly commented. Do not wrap it in markdown formatting if saving directly to a .sql file.
+
+# Step 11: Concurrency Design
+
+Save to: `outputs/11-concurrency-design-G10.md`
+
+**Context & Role:**
+You are a Senior Database Designer. Based on the schema in `09-updated-erd-and-logical-design-G10.md`,
+define 2 concurrency conflict scenarios and propose a solution for each.
+
+**Analytical Directives:**
+1. **Distinct sources**: The 2 scenarios must arise from different transaction types per §1.2 of the Phase 2 spec — 
+   e.g. (a) two manual staff-approval operations racing on the same space, and (b) an auto-approval (instant booking) racing a manual approval, 
+   or two auto-approvals racing each other.
+2. **Explicit interleaving**: Each scenario must show the actual read/write timeline of the two transactions (T1, T2) — 
+   what each reads, when, and how both pass the overlap check before either commits — not just a prose description.
+3. **Schema-grounded**: Reference the actual columns/index involved (BookingRequest.Status, StartTime/EndTime, SpaceCode, IX_BookingRequest_SpaceTime) 
+   — analysis must be specific to this schema, not generic.
+4. **No Code, Analytical Only**: No T-SQL at this stage — sequence/timeline tables are fine, executable code is not.
+5. **BR21 traceability**: Both scenarios must show BR21 ('No two approved bookings overlap on the same space') is violated if unmitigated, 
+   and the proposed solution must be shown to restore it.
+6. **Tradeoff justification**: For each solution (SERIALIZABLE isolation, UPDLOCK/HOLDLOCK hints, or both), state the tradeoff — 
+   blocking/deadlock risk vs. throughput — and why it's the right choice for that specific scenario.
+
+# Step 12: Concurrency Implementation
+
+Save to: `outputs/12-concurrency-implementation-G10/`
+
+**Context & Role:**
+You are a Senior Database Administrator (DBA).
+
+# Step 13: Concurrency Tests
+
+Save to: `outputs/13-concurrency-tests-G10.md`
+
+**Context & Role:**
+You are a Senior Database Administrator (DBA).
