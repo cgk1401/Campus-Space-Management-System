@@ -254,6 +254,7 @@ def main():
                 f.write("GO\n\n")
 
         print(f"Batch {b_idx+1}/{total_batches} generated.")
+        booking_id = batch_end
 
     print("\nData generation completed successfully!")
 

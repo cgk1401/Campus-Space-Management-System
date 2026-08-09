@@ -32,9 +32,9 @@ BEGIN
         ADD ImpactLevel NVARCHAR(20) NOT NULL
             CONSTRAINT DF_MaintenanceRecord_ImpactLevel DEFAULT 'OutOfService';
 
-    ALTER TABLE MaintenanceRecord
-        ADD CONSTRAINT CK_MaintenanceRecord_ImpactLevel
-        CHECK (ImpactLevel IN ('Advisory', 'OutOfService'));
+    EXEC('ALTER TABLE MaintenanceRecord
+            ADD CONSTRAINT CK_MaintenanceRecord_ImpactLevel
+            CHECK (ImpactLevel IN (''Advisory'', ''OutOfService''))');
 END;
 GO
 

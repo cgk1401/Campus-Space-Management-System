@@ -36,7 +36,7 @@ Do not jump directly to DDL. The documents from the prior steps should be follow
 - `outputs/12-concurrency-implementation-G10.sql`
 - `outputs/13-concurrency-tests-G10`
 - `outputs/14-data-generator-G10`
-- `outputs/15-index-tuning-report-G10.md`
+- `outputs/15-index-tuning-report-G10/` (folder with `15-index-tuning-report-G10.md` + `benchmark_queries.sql`)
 - `outputs/16-analytical-queries-G10.sql`
 
 ## DBMS
