@@ -181,6 +181,75 @@ You are a Senior Database Administrator (DBA). Your task is to write a SQL Migra
 
 Provide ONLY valid SQL code, properly commented. Do not wrap it in markdown formatting if saving directly to a .sql file.
 
+
+# Step 11: Concurrency Design
+
+Save to: `outputs/11-concurrency-design-G10.md`
+
+**Context & Role:**
+You are a Senior Database Designer. Based on the schema in `09-updated-erd-and-logical-design-G10.md`,
+define 2 concurrency conflict scenarios and propose a solution for each.
+
+**Analytical Directives:**
+1. **Distinct sources**: The 2 scenarios must arise from different transaction types per §1.2 of the Phase 2 spec — 
+   e.g. (a) two manual staff-approval operations racing on the same space, and (b) an auto-approval (instant booking) racing a manual approval, 
+   or two auto-approvals racing each other.
+2. **Explicit interleaving**: Each scenario must show the actual read/write timeline of the two transactions (T1, T2) — 
+   what each reads, when, and how both pass the overlap check before either commits — not just a prose description.
+3. **Schema-grounded**: Reference the actual columns/index involved (BookingRequest.Status, StartTime/EndTime, SpaceCode, IX_BookingRequest_SpaceTime) 
+   — analysis must be specific to this schema, not generic.
+4. **No Code, Analytical Only**: No T-SQL at this stage — sequence/timeline tables are fine, executable code is not.
+5. **BR21 traceability**: Both scenarios must show BR21 ('No two approved bookings overlap on the same space') is violated if unmitigated, 
+   and the proposed solution must be shown to restore it.
+6. **Tradeoff justification**: For each solution (SERIALIZABLE isolation, UPDLOCK/HOLDLOCK hints, or both), state the tradeoff — 
+   blocking/deadlock risk vs. throughput — and why it's the right choice for that specific scenario.
+
+# Step 12: Concurrency Implementation
+
+Save to: `outputs/12-concurrency-implementation-G10.sql`
+
+**Context & Role:**
+You are a Senior Database Administrator (DBA). Based on the scenarios and analysis in `11-concurrency-design-G10.md`, 
+implement the concurrency-prevention mechanism.
+
+**Implementation Directives:**
+1. **Core Procedures:** Implement a stored procedure (or transaction template) for the auto-approval path, 
+                        and a separate one for the manual-approval path.
+2. **Follow Analysis:** Both procedures must implement the concurrency control strategy designed in `11-concurrency-design-G10.md`, 
+                        without restating or hardcoding specific lock/isolation syntax choices here beyond what the design calls for 
+                        — if the design changes, this script should be updated to match, not treated as the source of truth.
+3. **Shared Overlap Logic:** Both procedures must use identical overlap-check logic (e.g. a shared scalar function or identical inline predicate) 
+                             so the two paths cannot drift apart.
+4. **Idempotent:** Use `CREATE OR ALTER PROCEDURE` so the script is safely re-runnable.
+5. **Transaction Safety:** Explicit `BEGIN TRAN` / `COMMIT` / `ROLLBACK` with `TRY/CATCH` error handling.
+6. **Naming Convention:** Follow existing project convention (e.g. `usp_<Action>_<Path>`). 
+7. **Scope Guard:** Do not include unmitigated ("before-fix") versions or any test/demo scripts — that is Step 13's responsibility.
+8. **Syntax:** Ensure all SQL is valid T-SQL (Microsoft SQL Server syntax).
+
+# Step 13: Concurrency Tests
+
+Save to: `outputs/13-concurrency-tests-G10/`
+
+**Context & Role:**
+You are a Senior Database Administrator (DBA). Based on the scenarios in
+`11-concurrency-design-G10.md`, create tests proving the solution implemented in
+`12-concurrency-implementation-G10.sql` is both necessary and effective.
+
+**Implementation Directives:**
+1. **Follow Scenario:** Reproduce Scenario A and Scenario B from Step 11 exactly (same actors, windows, transaction types).
+2. **Before/After Pairing:** For each scenario, provide BOTH an unmitigated demo (BR21 violated) and 
+                             a mitigated demo (BR21 holds, using the actual Step 12 procedures). 
+                             Do not modify `12-concurrency-implementation-G10.sql` to produce the unmitigated version — 
+                             use raw ad-hoc T-SQL that bypasses the anchor lock, isolated to this folder.
+3. **Real Interleaving:** Use two separate sessions (documented as two SSMS windows / sqlcmd connections, or scripted with WAITFOR DELAY 
+                          to force the interleave) — not sequential statements in one session.
+4. **Evidence:** Each demo must capture observable proof: blocking/waiting state (e.g. sys.dm_exec_requests / sys.dm_tran_locks) 
+                 for the mitigated case, and final table state for both, with an explicit pass/fail query 
+                 (e.g. COUNT of overlapping Approved bookings — expect 2 unmitigated, ≤1 mitigated).
+5. **Test Isolation:** Use a dedicated test Space/requester and clean up (DELETE or transaction ROLLBACK) after each test 
+                       so no test data persists into the Step 14 dataset.
+6. **Syntax:** Ensure all SQL is valid T-SQL (Microsoft SQL Server syntax).
+
 # Step 14: Data Generator
 Save to: `outputs/14-data-generator-G10`
 
@@ -228,4 +297,3 @@ You are a Senior Database Developer. Implement all reporting queries required by
 
 Provide ONLY valid SQL code, properly commented. Do not wrap it in markdown formatting if saving directly to a .sql file.
 
-EOF
